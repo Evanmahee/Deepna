@@ -10,6 +10,7 @@ type PatchBody = {
   icon_color?: string | null;
   habit_type?: "good" | "bad" | "neutral";
   description?: string | null;
+  archived?: boolean;
 };
 
 async function supabaseRoute() {
@@ -50,7 +51,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   const { error } = await supabase
     .from("habits")
-    .update({ archived: true })
+    .delete()
     .eq("id", id)
     .eq("user_id", user.id);
 
@@ -96,6 +97,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     updates.icon_color = body.icon_color
       ? body.icon_color.toUpperCase()
       : null;
+  }
+  if (body.archived !== undefined) {
+    updates.archived = body.archived;
   }
 
   if (Object.keys(updates).length === 0) {

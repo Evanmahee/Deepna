@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { CreateHabitModal } from "@/components/today/CreateHabitModal";
 
-export function FloatingAddButton() {
+type FloatingAddButtonProps = {
+  initialView?: "templates" | "custom";
+};
+
+export function FloatingAddButton({
+  initialView = "templates",
+}: FloatingAddButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -16,7 +22,11 @@ export function FloatingAddButton() {
       >
         +
       </button>
-      <CreateHabitModal open={open} onClose={() => setOpen(false)} />
+      <CreateHabitModal
+        open={open}
+        onClose={() => setOpen(false)}
+        initialView={initialView}
+      />
     </>
   );
 }

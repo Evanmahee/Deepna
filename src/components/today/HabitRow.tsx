@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Plus } from "lucide-react";
 import { EditHabitModal } from "@/components/today/EditHabitModal";
-import { HabitActionSheet } from "@/components/today/HabitActionSheet";
-import { HabitInspectModal } from "@/components/today/HabitInspectModal";
+import { HabitContextMenu } from "@/components/today/HabitContextMenu";
 import { useLongPress } from "@/lib/use-long-press";
 import type { HabitRowData } from "@/types/today";
 
@@ -15,6 +14,8 @@ type HabitRowProps = {
   completedToday: boolean;
   onCompletedChange?: (completed: boolean) => void;
 };
+
+const SWIPE_THRESHOLD = 72;
 
 async function logAction(
   habitId: string,
@@ -46,10 +47,10 @@ export function HabitRow({
   const [completed, setCompleted] = useState(completedToday);
   const [pending, setPending] = useState(false);
   const [sweep, setSweep] = useState<"in" | "out" | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [inspecting, setInspecting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const touchStartX = useRef(0);
 
   useEffect(() => {
     setCompleted(completedToday);
@@ -68,12 +69,12 @@ export function HabitRow({
     requestAnimationFrame(() => setSweep(mode));
   }
 
-  const openSheet = useCallback(() => {
-    setSheetOpen(true);
+  const openMenu = useCallback(() => {
+    setMenuOpen(true);
   }, []);
 
   const { longPressProps, didLongPress, resetLongPress } = useLongPress({
-    onLongPress: openSheet,
+    onLongPress: openMenu,
   });
 
   const toggle = useCallback(async () => {
@@ -104,9 +105,13 @@ export function HabitRow({
   }, [completed, habit.id, logDate, onCompletedChange, router]);
 
   async function archiveHabit() {
-    setDeleting(true);
+    setBusy(true);
     try {
-      const res = await fetch(`/api/habits/${habit.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/habits/${habit.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: true }),
+      });
       const j = (await res.json()) as { error?: string };
       if (!res.ok) {
         throw new Error(j.error ?? "Archivage impossible");
@@ -115,75 +120,60 @@ export function HabitRow({
     } catch {
       /* silencieux */
     } finally {
-      setDeleting(false);
+      setBusy(false);
     }
   }
 
-  async function duplicateHabit() {
-    const res = await fetch("/api/habits", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: `${habit.name} (copie)`,
-        icon_emoji: habit.icon_emoji,
-        icon_color: habit.icon_color,
-        habit_type: habit.habit_type,
-        description: habit.description,
-        time_block_id: habit.time_block_id,
-      }),
-    });
-    const j = (await res.json()) as { error?: string };
-    if (!res.ok) {
-      throw new Error(j.error ?? "Duplication impossible");
+  async function deleteHabit() {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/habits/${habit.id}`, { method: "DELETE" });
+      const j = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        throw new Error(j.error ?? "Suppression impossible");
+      }
+      router.refresh();
+    } catch {
+      /* silencieux */
+    } finally {
+      setBusy(false);
     }
-    router.refresh();
   }
 
-  async function resetHistory() {
-    const res = await fetch(`/api/habits/${habit.id}/history`, {
-      method: "DELETE",
-    });
-    const j = (await res.json()) as { error?: string };
-    if (!res.ok) {
-      throw new Error(j.error ?? "Réinitialisation impossible");
-    }
-    setCompleted(false);
-    router.refresh();
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0]?.clientX ?? 0;
+    longPressProps.onTouchStart?.(e);
   }
 
-  async function setLogAction(action: "complete" | "fail" | "skip") {
-    if (action === "complete" && !completed) {
-      triggerSweep("in");
-    } else if ((action === "fail" || action === "skip") && completed) {
-      triggerSweep("out");
+  function handleTouchEnd(e: React.TouchEvent) {
+    const endX = e.changedTouches[0]?.clientX ?? 0;
+    const deltaX = endX - touchStartX.current;
+    if (deltaX < -SWIPE_THRESHOLD && !didLongPress()) {
+      openMenu();
     }
-    const json = await logAction(habit.id, logDate, action);
-    if (action === "skip") {
-      setCompleted(false);
-    } else if (typeof json.completed === "boolean") {
-      setCompleted(json.completed);
-    }
-    router.refresh();
+    longPressProps.onTouchEnd?.(e);
   }
 
   return (
     <>
       <div
         {...longPressProps}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         className={`relative flex select-none items-center gap-2 overflow-hidden rounded-xl border px-2 py-2.5 shadow-sm transition-colors duration-300 active:scale-[0.99] sm:gap-3 sm:px-3 ${
           completed
             ? "border-black/10 bg-white text-black"
             : "glass-habit text-white"
-        } ${deleting ? "pointer-events-none opacity-40" : ""}`}
+        } ${busy ? "pointer-events-none opacity-40" : ""}`}
         role="button"
         tabIndex={0}
-        aria-label={`${habit.name}. Appui court pour cocher. Appui long pour les options.`}
+        aria-label={`${habit.name}. Appui court pour cocher. Appui long ou glisser à gauche pour les options.`}
         onClick={() => {
           if (didLongPress()) {
             resetLongPress();
             return;
           }
-          if (pending || deleting) {
+          if (pending || busy) {
             return;
           }
           void toggle();
@@ -191,7 +181,7 @@ export function HabitRow({
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            if (!pending && !deleting) {
+            if (!pending && !busy) {
               void toggle();
             }
           }
@@ -274,30 +264,17 @@ export function HabitRow({
         </button>
       </div>
 
-      <HabitActionSheet
-        habit={sheetOpen ? habit : null}
-        logDate={logDate}
-        completed={completed}
-        onClose={() => setSheetOpen(false)}
-        onComplete={() => setLogAction("complete")}
-        onFail={() => setLogAction("fail")}
-        onSkip={() => setLogAction("skip")}
+      <HabitContextMenu
+        habit={menuOpen ? habit : null}
+        onClose={() => setMenuOpen(false)}
         onEdit={() => setEditing(true)}
-        onAddNote={() => setEditing(true)}
-        onInspect={() => setInspecting(true)}
-        onDuplicate={() => duplicateHabit()}
-        onResetHistory={() => resetHistory()}
         onArchive={() => archiveHabit()}
-        onDelete={() => archiveHabit()}
+        onDelete={() => deleteHabit()}
       />
 
       <EditHabitModal
         habit={editing ? habit : null}
         onClose={() => setEditing(false)}
-      />
-      <HabitInspectModal
-        habit={inspecting ? habit : null}
-        onClose={() => setInspecting(false)}
       />
     </>
   );

@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, Calendar, Clock, User } from "lucide-react";
+import { BarChart2, Clock, Home, User } from "lucide-react";
 
 const items = [
-  { href: "/", label: "Aujourd'hui", Icon: Calendar },
+  { href: "/", label: "Aujourd'hui", Icon: Home },
   { href: "/stats", label: "Stats", Icon: BarChart2 },
-  { href: "/checkin", label: "Heure", Icon: Clock },
+  { href: "/checkin", label: "Check-in", Icon: Clock },
   { href: "/profile", label: "Profil", Icon: User },
 ] as const;
 
@@ -42,14 +42,14 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-1.5 text-[10px] leading-tight transition-colors ${
+              className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] leading-tight transition-colors ${
                 active
-                  ? "font-semibold text-white"
+                  ? "font-semibold text-indigo-300"
                   : "font-medium text-white/35 hover:text-white/55"
               }`}
             >
               <Icon
-                className="h-5 w-5 shrink-0"
+                className={`h-5 w-5 shrink-0 ${active ? "text-indigo-300" : ""}`}
                 strokeWidth={active ? 2.5 : 1.75}
               />
               <span className="max-w-full truncate">{label}</span>

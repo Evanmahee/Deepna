@@ -7,14 +7,25 @@ import { HeaderOrganizeButton } from "@/components/nav/HeaderOrganizeButton";
 
 const DURATION_MS = 320;
 
-export function TodayPageHeader() {
+type TodayPageHeaderProps = {
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+};
+
+export function TodayPageHeader({
+  searchQuery,
+  onSearchQueryChange,
+}: TodayPageHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   function closeSearch() {
     setSearchOpen(false);
-    window.setTimeout(() => setQuery(""), DURATION_MS);
+    window.setTimeout(() => onSearchQueryChange(""), DURATION_MS);
+  }
+
+  function openSearch() {
+    setSearchOpen(true);
   }
 
   useEffect(() => {
@@ -29,10 +40,6 @@ export function TodayPageHeader() {
       window.removeEventListener("keydown", onKey);
     };
   }, [searchOpen]);
-
-  function openSearch() {
-    setSearchOpen(true);
-  }
 
   return (
     <header className="px-3 pt-3 pb-1">
@@ -79,7 +86,7 @@ export function TodayPageHeader() {
               transform: searchOpen ? "translateX(8px)" : "translateX(0)",
             }}
           >
-            <HeaderActions showSearch={false} />
+            <HeaderActions showSearch={false} habitInitialView="custom" />
             <button
               type="button"
               onClick={openSearch}
@@ -118,8 +125,8 @@ export function TodayPageHeader() {
             <input
               ref={inputRef}
               type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
               placeholder="Rechercher une habitude…"
               tabIndex={searchOpen ? 0 : -1}
               className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-white/50 focus:outline-none"

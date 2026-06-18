@@ -17,11 +17,16 @@ import { CreateHabitModalSheet } from "@/components/today/CreateHabitModalSheet"
 type CreateHabitModalProps = {
   open: boolean;
   onClose: () => void;
+  initialView?: ModalView;
 };
 
 type ModalView = "templates" | "custom";
 
-export function CreateHabitModal({ open, onClose }: CreateHabitModalProps) {
+export function CreateHabitModal({
+  open,
+  onClose,
+  initialView = "templates",
+}: CreateHabitModalProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [timeBlocks, setTimeBlocks] = useState<TimeBlockRow[]>([]);
@@ -77,13 +82,22 @@ export function CreateHabitModal({ open, onClose }: CreateHabitModalProps) {
 
   useEffect(() => {
     if (!open) {
-      setView("templates");
+      setView(initialView);
       setCategory("bonnes");
       setQuery("");
       setErr(null);
       setCustomDefaults(null);
+    } else {
+      setView(initialView);
+      if (initialView === "custom") {
+        setCustomDefaults({
+          name: "",
+          emoji: "⭐",
+          type: "good",
+        });
+      }
     }
-  }, [open]);
+  }, [open, initialView]);
 
   const filtered = useMemo(() => {
     const base = templatesForCategory(category);

@@ -3,10 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseLoggedOnParam, addDaysUtc } from "@/lib/dates";
 import { buildCompletionByDay } from "@/lib/day-completion";
 import type { HabitLite } from "@/lib/habit-stats";
-import { DateStrip } from "@/components/today/DateStrip";
-import { TimeBlockSection } from "@/components/today/TimeBlockSection";
-import { FloatingAddButton } from "@/components/today/FloatingAddButton";
-import { TodayPageHeader } from "@/components/today/TodayPageHeader";
+import { TodayPageClient } from "@/components/today/TodayPageClient";
 import type { HabitLogRow, HabitRowData, TimeBlockRow } from "@/types/today";
 
 type TodayPageProps = {
@@ -79,53 +76,13 @@ export async function TodayPage({ searchParams }: TodayPageProps) {
     logsByHabitId[log.habit_id] = log;
   }
 
-  const byBlock = new Map<string | null, HabitRowData[]>();
-  for (const h of habits) {
-    const key = h.time_block_id;
-    const arr = byBlock.get(key) ?? [];
-    arr.push(h);
-    byBlock.set(key, arr);
-  }
-  for (const arr of byBlock.values()) {
-    arr.sort(
-      (a, b) =>
-        (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
-        a.name.localeCompare(b.name, "fr"),
-    );
-  }
-
   return (
-    <div className="flex min-h-full min-w-0 flex-1 flex-col overflow-x-hidden">
-      <div className="sticky top-0 z-10">
-        <TodayPageHeader />
-        <DateStrip selectedDate={logDate} completionByDay={completionByDay} />
-      </div>
-      <main className="flex-1 space-y-1 px-3 pb-4 pt-6">
-        {habits.length === 0 ? (
-          <p className="glass rounded-xl px-4 py-6 text-center text-sm text-neutral-400">
-            Commence par créer ta première habitude → appuie sur le bouton{" "}
-            <span className="font-semibold text-white">+</span> en bas à droite.
-          </p>
-        ) : null}
-        {timeBlocks.map((block, i) => (
-          <TimeBlockSection
-            key={block.id}
-            block={block}
-            habits={byBlock.get(block.id) ?? []}
-            logsByHabitId={logsByHabitId}
-            logDate={logDate}
-            defaultOpen={i === 0}
-          />
-        ))}
-        <TimeBlockSection
-          block={null}
-          habits={byBlock.get(null) ?? []}
-          logsByHabitId={logsByHabitId}
-          logDate={logDate}
-          defaultOpen={timeBlocks.length === 0}
-        />
-      </main>
-      <FloatingAddButton />
-    </div>
+    <TodayPageClient
+      logDate={logDate}
+      timeBlocks={timeBlocks}
+      habits={habits}
+      logsByHabitId={logsByHabitId}
+      completionByDay={completionByDay}
+    />
   );
 }

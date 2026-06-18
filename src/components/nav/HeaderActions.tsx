@@ -9,11 +9,13 @@ import { CreateGoalModal } from "@/components/goals/CreateGoalModal";
 type HeaderActionsProps = {
   showSearch?: boolean;
   onSearchClick?: () => void;
+  habitInitialView?: "templates" | "custom";
 };
 
 export function HeaderActions({
   showSearch = true,
   onSearchClick,
+  habitInitialView = "templates",
 }: HeaderActionsProps) {
   const pathname = usePathname();
   const isProfile =
@@ -55,7 +57,11 @@ export function HeaderActions({
           </button>
         ) : null}
       </div>
-      <CreateHabitModal open={habitOpen} onClose={() => setHabitOpen(false)} />
+      <CreateHabitModal
+        open={habitOpen}
+        onClose={() => setHabitOpen(false)}
+        initialView={habitInitialView}
+      />
       <CreateGoalModal open={goalOpen} onClose={() => setGoalOpen(false)} />
     </>
   );

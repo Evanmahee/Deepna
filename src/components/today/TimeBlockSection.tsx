@@ -11,6 +11,7 @@ type TimeBlockSectionProps = {
   logsByHabitId: Record<string, HabitLogRow | undefined>;
   logDate: string;
   defaultOpen?: boolean;
+  unassignedLabel?: string;
 };
 
 function formatBlockTime(iso: string): string {
@@ -31,6 +32,7 @@ export function TimeBlockSection({
   logsByHabitId,
   logDate,
   defaultOpen = false,
+  unassignedLabel,
 }: TimeBlockSectionProps) {
   const [completedOverrides, setCompletedOverrides] = useState<
     Record<string, boolean>
@@ -49,7 +51,7 @@ export function TimeBlockSection({
 
   const title = block
     ? `${block.icon_emoji ? `${block.icon_emoji} ` : ""}${block.title}`
-    : "Sans créneau";
+    : (unassignedLabel ?? "Sans créneau");
   const subtitle = block
     ? `${formatBlockTime(block.starts_at)} – ${formatBlockTime(block.ends_at)}`
     : "Habitudes non assignées";
