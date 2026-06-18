@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 
 type MantraDisplayProps = {
@@ -8,53 +7,44 @@ type MantraDisplayProps = {
 };
 
 export function MantraDisplay({ value, onChange }: MantraDisplayProps) {
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
 
-  async function save() {
-    setMsg(null);
-    setSaving(true);
-    try {
-      const res = await fetch("/api/identity/statement", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identity_statement: value }),
-      });
-      const j = (await res.json()) as { error?: string };
-      if (!res.ok) {
-        throw new Error(j.error ?? "Erreur");
-      }
-      setMsg("Mantra enregistré.");
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Erreur");
-    } finally {
-      setSaving(false);
-    }
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-2">
+        <textarea
+          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 resize-none"
+          rows={4}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Écris qui tu veux devenir..."
+          autoFocus
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => { onChange(draft); setEditing(false); }}
+            className="flex-1 rounded-xl bg-indigo-500 text-white text-sm font-medium py-2"
+          >
+            Sauvegarder
+          </button>
+          <button
+            onClick={() => { setDraft(value); setEditing(false); }}
+            className="flex-1 rounded-xl bg-white/5 text-white/60 text-sm py-2"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="glass rounded-xl p-4 shadow-sm">
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Mantra (identité)
-      </label>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={6}
-        className="glass-input w-full resize-y rounded-xl px-3 py-3 text-base text-slate-900 placeholder:text-slate-400"
-        placeholder="Qui je suis, ce que je deviens…"
-      />
-      <div className="mt-3 flex items-center gap-3">
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => void save()}
-          className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 disabled:opacity-50"
-        >
-          {saving ? "…" : "Enregistrer le mantra"}
-        </button>
-        {msg ? <span className="text-xs text-slate-500">{msg}</span> : null}
-      </div>
-    </div>
+    <button
+      onClick={() => { setDraft(value); setEditing(true); }}
+      className="w-full text-left rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white/80 italic"
+    >
+      {value || "Tape ici qui tu veux devenir..."}
+    </button>
   );
 }
