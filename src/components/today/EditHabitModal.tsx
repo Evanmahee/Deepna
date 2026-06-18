@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { HabitRowData } from "@/types/today";
 
-import { glassInputClass } from "@/lib/glass";
+import { glassInputDarkClass } from "@/lib/glass";
 
-const inputClass = glassInputClass;
+const inputClass = glassInputDarkClass;
 const textareaClass = `${inputClass} min-h-[5.5rem] resize-y`;
 
 type EditHabitModalProps = {
@@ -62,21 +62,21 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
   }
 
   return (
-    <div className="glass-overlay fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-0 z-[250] flex flex-col justify-end">
       <button
         type="button"
-        className="flex-1 cursor-default"
+        className="flex-1 bg-black/60"
         aria-label="Fermer"
         onClick={onClose}
       />
-      <div className="glass-sheet max-h-[85vh] overflow-y-auto rounded-t-2xl px-4 pb-8 pt-4">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-300" />
-        <h3 className="mb-4 text-lg font-semibold text-slate-900">
+      <div className="glass-sheet-dark relative max-h-[85vh] w-full overflow-y-auto rounded-t-[32px] px-4 pb-8 pt-5">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+        <h3 className="mb-4 text-lg font-semibold text-white">
           Modifier l&apos;habitude
         </h3>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-neutral-400">
               Titre
             </label>
             <input
@@ -86,7 +86,7 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-neutral-400">
               Emoji
             </label>
             <input
@@ -96,9 +96,9 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-neutral-400">
               Description{" "}
-              <span className="font-normal text-slate-400">(optionnel)</span>
+              <span className="font-normal text-neutral-500">(optionnel)</span>
             </label>
             <textarea
               value={description}
@@ -107,16 +107,16 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
               placeholder="Pourquoi cette habitude ? Une anecdote, une raison d'arrêter…"
               rows={3}
             />
-            <p className="mt-1 text-[11px] text-slate-400">
+            <p className="mt-1 text-[11px] text-neutral-500">
               Visible uniquement via « Inspecter » sur l&apos;habitude.
             </p>
           </div>
-          {err ? <p className="text-sm text-neutral-700">{err}</p> : null}
+          {err ? <p className="text-sm text-rose-400">{err}</p> : null}
           <button
             type="button"
             disabled={loading || !title.trim()}
             onClick={() => void submit()}
-            className="w-full rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white shadow-md shadow-neutral-900/10 hover:bg-neutral-800 disabled:opacity-50"
+            className="w-full rounded-xl bg-white py-3 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {loading ? "Enregistrement…" : "Enregistrer"}
           </button>
