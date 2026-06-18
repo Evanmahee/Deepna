@@ -11,8 +11,13 @@ function isGuestPublic(pathname: string) {
   );
 }
 
+function isApiRoute(pathname: string) {
+  return pathname.startsWith("/api/");
+}
+
 function isOnboardingExempt(pathname: string) {
   return (
+    isApiRoute(pathname) ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/onboarding") ||
@@ -59,6 +64,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user && !isGuestPublic(pathname)) {
+    if (isApiRoute(pathname)) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

@@ -25,6 +25,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   const hideChrome =
     pathname.startsWith("/login") ||
+    pathname.startsWith("/onboarding") ||
     pathname.startsWith("/legal") ||
     /^\/share\/[^/]+$/.test(pathname) ||
     (pathname === "/" && !showNav);

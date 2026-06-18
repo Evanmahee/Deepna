@@ -59,10 +59,10 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ display_name })
-    .eq("id", user.id);
+  const { error } = await supabase.from("profiles").upsert(
+    { id: user.id, display_name },
+    { onConflict: "id" },
+  );
 
   if (error) {
     return NextResponse.json(
