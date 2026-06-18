@@ -6,8 +6,26 @@
 2. SQL Editor — exécute :
    - `supabase/schema.sql`
    - `supabase/migrations/000_production_align.sql` (si base déjà existante)
-3. Authentication → URL : site + redirect `…/auth/callback`
-4. Variables : `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `supabase/migrations/add_share.sql` (partage public)
+3. Ou via CLI (après `supabase link --project-ref <ref>` avec le mot de passe Postgres) :
+   ```bash
+   npx supabase db query --linked -f supabase/migrations/add_share.sql
+   ```
+4. Authentication → URL : site + redirect `…/auth/callback`
+5. Variables : `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+
+### Google OAuth (cloud)
+
+Le projet cloud doit activer Google dans **Authentication → Providers → Google** (actuellement désactivé tant que les credentials ne sont pas renseignés).
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services → Credentials**
+2. **Create Credentials → OAuth client ID** → type **Web application**
+3. **Authorized JavaScript origins** : `http://localhost:3000`, ton domaine Vercel
+4. **Authorized redirect URIs** :
+   - `https://<project-ref>.supabase.co/auth/v1/callback`
+   - `http://localhost:3000/auth/callback` (dev)
+5. Copie **Client ID** et **Client Secret** dans Supabase → Authentication → Google
+6. Dev local : `supabase/config.toml` référence `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` et `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`
 
 ## 2. Stripe
 
