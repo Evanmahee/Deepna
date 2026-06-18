@@ -4,20 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { HeaderActions } from "@/components/nav/HeaderActions";
 import { HeaderOrganizeButton } from "@/components/nav/HeaderOrganizeButton";
-import { formatTodayHeaderDate } from "@/lib/today-display";
+import { formatTodaySubtitle } from "@/lib/today-display";
 
 const DURATION_MS = 320;
 
 type TodayPageHeaderProps = {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
-  logDate: string;
+  subtitle: string;
 };
 
 export function TodayPageHeader({
   searchQuery,
   onSearchQueryChange,
-  logDate,
+  subtitle,
 }: TodayPageHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -79,7 +79,7 @@ export function TodayPageHeader({
           >
             <span className="text-xl font-semibold text-white">Aujourd&apos;hui</span>
             <span className="mt-0.5 truncate text-[11px] font-normal text-neutral-400">
-              {formatTodayHeaderDate(logDate).replace(/^Aujourd'hui · /, "")}
+              {subtitle}
             </span>
           </h1>
 

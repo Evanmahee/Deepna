@@ -6,7 +6,7 @@ import type { GoalTerm } from "@/types/goals";
 
 import { glassInputClass } from "@/lib/glass";
 
-const inputClass = `${glassInputClass} placeholder:text-slate-400`;
+const inputClass = `${glassInputClass} placeholder:text-neutral-500`;
 
 type CreateGoalModalProps = {
   open: boolean;
@@ -75,9 +75,9 @@ export function CreateGoalModal({
         aria-label="Fermer"
         onClick={onClose}
       />
-      <div className="glass-sheet max-h-[85vh] overflow-y-auto rounded-t-2xl px-4 pb-8 pt-4">
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
-        <h3 className="mb-3 text-lg font-semibold text-slate-900">Nouvel objectif</h3>
+      <div className="glass-sheet-dark max-h-[85vh] overflow-y-auto rounded-t-2xl px-4 pb-8 pt-4">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
+        <h3 className="mb-3 text-lg font-semibold text-white">Nouvel objectif</h3>
         <div className="space-y-3">
           <input
             value={title}
@@ -100,8 +100,8 @@ export function CreateGoalModal({
                 onClick={() => setTerm(t)}
                 className={`flex-1 rounded-xl border py-2 text-xs font-semibold ${
                   term === t
-                    ? "glass-subtle border-neutral-900/40 text-neutral-900"
-                    : "glass-pill text-slate-500"
+                    ? "border-indigo-400/60 bg-indigo-500/20 text-white"
+                    : "glass-pill text-neutral-400"
                 }`}
               >
                 {t === "short" ? "Court" : t === "mid" ? "Moyen" : "Long"}
@@ -114,12 +114,12 @@ export function CreateGoalModal({
             onChange={(e) => setTargetDate(e.target.value)}
             className={inputClass}
           />
-          {err ? <p className="text-xs text-neutral-700">{err}</p> : null}
+          {err ? <p className="text-xs text-red-400">{err}</p> : null}
           <button
             type="button"
             disabled={loading || !title.trim()}
             onClick={() => void submit()}
-            className="w-full rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white shadow-md hover:bg-neutral-800 disabled:opacity-50"
+            className="btn-primary w-full py-3 text-sm disabled:opacity-50"
           >
             {loading ? "…" : "Créer"}
           </button>

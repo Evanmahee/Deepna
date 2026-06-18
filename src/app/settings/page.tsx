@@ -22,7 +22,7 @@ export default async function SettingsPage() {
     <div className="min-h-full flex-1">
       <PageHeader title="Paramètres" />
       <div className="mx-auto max-w-lg px-4 py-6 pb-28">
-        <Suspense fallback={<p className="text-sm text-slate-500">…</p>}>
+        <Suspense fallback={<p className="text-sm text-neutral-500">…</p>}>
           <SettingsClient />
         </Suspense>
       </div>

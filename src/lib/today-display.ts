@@ -1,5 +1,10 @@
-/** Titre header « Aujourd'hui · Jeudi 18 juin » pour une date YYYY-MM-DD (UTC). */
-export function formatTodayHeaderDate(isoDay: string): string {
+/** Sous-titre header : « Jeudi 18 juin · 3/7 · 43% » */
+export function formatTodaySubtitle(
+  isoDay: string,
+  completed: number,
+  total: number,
+  pct: number,
+): string {
   const d = new Date(`${isoDay}T12:00:00.000Z`);
   const weekday = d.toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -11,7 +16,10 @@ export function formatTodayHeaderDate(isoDay: string): string {
     timeZone: "UTC",
   });
   const cap = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-  return `Aujourd'hui · ${cap} ${dayMonth}`;
+  if (total === 0) {
+    return `${cap} ${dayMonth}`;
+  }
+  return `${cap} ${dayMonth} · ${completed}/${total} · ${pct}%`;
 }
 
 export function dayCompletionStats(
@@ -24,6 +32,6 @@ export function dayCompletionStats(
   const pct = Math.round((completed / total) * 100);
   return {
     pct,
-    label: `${completed}/${total} habitudes · ${pct}%`,
+    label: `${completed}/${total} · ${pct}%`,
   };
 }

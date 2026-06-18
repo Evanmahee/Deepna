@@ -7,7 +7,7 @@ import { FloatingAddButton } from "@/components/today/FloatingAddButton";
 import { TodayPageHeader } from "@/components/today/TodayPageHeader";
 import { TodayDayProgress } from "@/components/today/TodayDayProgress";
 import { CreateGroupModal } from "@/components/today/CreateGroupModal";
-import { dayCompletionStats } from "@/lib/today-display";
+import { formatTodaySubtitle, dayCompletionStats } from "@/lib/today-display";
 import type { DayCompletionStatus } from "@/lib/day-completion";
 import type { HabitLogRow, HabitRowData, TimeBlockRow } from "@/types/today";
 
@@ -72,6 +72,12 @@ export function TodayPageClient({
   }, [filteredHabits, logsByHabitId]);
 
   const dayStats = dayCompletionStats(filteredHabits.length, completedToday);
+  const subtitle = formatTodaySubtitle(
+    logDate,
+    completedToday,
+    filteredHabits.length,
+    dayStats.pct,
+  );
 
   return (
     <div className="flex min-h-full min-w-0 flex-1 flex-col overflow-x-hidden">
@@ -79,15 +85,10 @@ export function TodayPageClient({
         <TodayPageHeader
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
-          logDate={logDate}
+          subtitle={subtitle}
         />
         {!noResults && filteredHabits.length > 0 ? (
-          <TodayDayProgress
-            completed={completedToday}
-            total={filteredHabits.length}
-            label={dayStats.label}
-            pct={dayStats.pct}
-          />
+          <TodayDayProgress pct={dayStats.pct} />
         ) : null}
         <DateStrip selectedDate={logDate} completionByDay={completionByDay} />
       </div>
@@ -99,14 +100,27 @@ export function TodayPageClient({
         ) : null}
 
         {!noResults && habits.length === 0 ? (
-          <p className="glass rounded-xl px-4 py-6 text-center text-sm text-neutral-400">
-            Commence par créer ta première habitude → appuie sur le bouton{" "}
-            <span className="font-semibold text-white">+</span> en haut à droite
-            ou en bas à droite.
-          </p>
+          <div className="glass rounded-2xl px-6 py-10 text-center">
+            <span className="text-5xl" aria-hidden>
+              🎯
+            </span>
+            <p className="mt-4 text-base font-medium text-white">
+              Commence par créer ton premier groupe d&apos;habitudes
+            </p>
+            <p className="mt-2 text-sm text-neutral-400">
+              Organise tes habitudes par moment de la journée.
+            </p>
+            <button
+              type="button"
+              onClick={() => setGroupModalOpen(true)}
+              className="mt-6 rounded-xl bg-[#6366f1] px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-400"
+            >
+              Créer mon premier groupe
+            </button>
+          </div>
         ) : null}
 
-        {hasNoGroups && !noResults ? (
+        {hasNoGroups && !noResults && habits.length > 0 ? (
           <div className="glass rounded-2xl px-6 py-10 text-center">
             <span className="text-5xl" aria-hidden>
               🎯

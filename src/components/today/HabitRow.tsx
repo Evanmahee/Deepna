@@ -162,11 +162,9 @@ export function HabitRow({
         {...longPressProps}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className={`relative flex select-none items-center gap-2 overflow-hidden rounded-xl border px-2 py-2.5 shadow-sm transition-all duration-300 active:scale-[0.99] sm:gap-3 sm:px-3 ${
-          completed
-            ? "border-black/10 bg-white text-black"
-            : "glass-habit text-white"
-        } ${dimmed ? "opacity-50 saturate-[0.35]" : ""} ${busy ? "pointer-events-none opacity-40" : ""}`}
+        className={`relative flex select-none items-center gap-2 overflow-hidden border px-4 py-3 shadow-sm transition-all duration-300 active:scale-[0.99] sm:gap-3 ${
+          completed ? "glass-habit-done text-white/50" : "glass-habit text-white"
+        } ${dimmed ? "opacity-55 saturate-[0.4]" : ""} ${busy ? "pointer-events-none opacity-40" : ""}`}
         role="button"
         tabIndex={0}
         aria-label={`${habit.name}. Appui court pour cocher. Appui long ou glisser à gauche pour les options.`}
@@ -192,7 +190,7 @@ export function HabitRow({
         {sweep ? (
           <span
             aria-hidden
-            className={`pointer-events-none absolute inset-0 z-[1] bg-white ${
+            className={`pointer-events-none absolute inset-0 z-[1] bg-indigo-500/30 ${
               sweep === "in" ? "habit-complete-sweep" : "habit-uncheck-sweep"
             }`}
           />
@@ -219,7 +217,9 @@ export function HabitRow({
           aria-pressed={completed}
           aria-label={completed ? "Marquer non fait" : "Marquer fait"}
           className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 transition-[border-color] duration-300 disabled:opacity-50 sm:h-9 sm:w-9 ${
-            completed ? "border-black text-white" : "border-white/35 text-white"
+            completed
+              ? "border-indigo-400/60 text-indigo-300"
+              : "border-white/35 text-white"
           }`}
         >
           {(completed || sweep === "in" || sweep === "out") && (
@@ -233,7 +233,7 @@ export function HabitRow({
                 cy="18"
                 r="14"
                 fill="none"
-                stroke="#000000"
+                stroke="#6366f1"
                 strokeWidth="28"
                 strokeDasharray="88"
                 strokeLinecap="butt"

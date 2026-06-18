@@ -44,12 +44,12 @@ export function BottomNav() {
               href={href}
               className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] leading-tight transition-colors ${
                 active
-                  ? "font-semibold text-indigo-300"
+                  ? "font-semibold text-[#6366f1]"
                   : "font-medium text-white/35 hover:text-white/55"
               }`}
             >
               <Icon
-                className={`h-5 w-5 shrink-0 ${active ? "text-indigo-300" : ""}`}
+                className={`h-5 w-5 shrink-0 ${active ? "text-[#6366f1]" : ""}`}
                 strokeWidth={active ? 2.5 : 1.75}
               />
               <span className="max-w-full truncate">{label}</span>

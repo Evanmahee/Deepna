@@ -74,7 +74,7 @@ export function CheckinButton({
         type="button"
         disabled={disabled || loading}
         onClick={() => void submit()}
-        className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-sm hover:bg-neutral-200 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-neutral-500"
+        className="rounded-xl bg-[#6366f1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-neutral-500"
       >
         {loading ? "…" : disabled ? "Terminé" : "J'ai lu et intériorisé"}
       </button>

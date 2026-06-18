@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
+  --background: #0a0a0f;
   --foreground: #ffffff;
-  --accent: #ffffff;
-  --accent-hover: #d4d4d4;
-  --border: rgba(255, 255, 255, 0.12);
-  --input-bg: rgba(255, 255, 255, 0.08);
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --border: rgba(255, 255, 255, 0.1);
+  --input-bg: rgba(255, 255, 255, 0.06);
   --muted: #a3a3a3;
-  --card: rgba(255, 255, 255, 0.08);
-  --primary: #ffffff;
-  --primary-fg: #000000;
+  --card: #1a1a24;
+  --card-elevated: #111116;
+  --primary: #6366f1;
+  --primary-fg: #ffffff;
+  --habit-card: #1a1a24;
   --glass-fill: rgba(255, 255, 255, 0.08);
   --glass-fill-strong: rgba(255, 255, 255, 0.12);
   --glass-border: rgba(255, 255, 255, 0.14);
@@ -22,7 +24,7 @@
     inset 0 -1px 0 rgba(255, 255, 255, 0.06),
     inset 1px 0 0 rgba(255, 255, 255, 0.1);
   --liquid-float: 0 12px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
-  --sheet-dark: #1c1c1e;
+  --sheet-dark: #1a1a24;
 }
 
 @theme inline {
@@ -39,16 +41,16 @@
 
 html {
   color-scheme: dark;
-  background-color: #000000;
+  background-color: var(--background);
 }
 
 body {
   min-height: 100%;
-  background-color: #000000;
+  background-color: var(--background);
   background-image:
-    radial-gradient(ellipse 90% 60% at 15% 10%, rgba(55, 75, 115, 0.22) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 85% 25%, rgba(95, 65, 120, 0.16) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 55% at 50% 95%, rgba(45, 65, 95, 0.14) 0%, transparent 55%);
+    radial-gradient(ellipse 90% 60% at 15% 10%, rgba(99, 102, 241, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 25%, rgba(55, 65, 115, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 55% at 50% 95%, rgba(45, 55, 95, 0.1) 0%, transparent 55%);
   background-attachment: fixed;
   color: #ffffff;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
@@ -83,20 +85,18 @@ body {
     box-shadow: var(--liquid-rim);
   }
 
-  /* Carte habitude sur fond noir — liquid glass plus marqué */
+  /* Carte habitude */
   .glass-habit {
-    background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.14) 0%,
-      rgba(255, 255, 255, 0.06) 45%,
-      rgba(255, 255, 255, 0.02) 100%
-    );
-    backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
-    -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.22),
-      0 4px 24px rgba(0, 0, 0, 0.35);
+    background: var(--habit-card);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28);
+  }
+
+  .glass-habit-done {
+    background: #15151c;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
   }
 
   .glass-strong {
@@ -134,18 +134,12 @@ body {
   }
 
   .glass-nav {
-    background: linear-gradient(
-      165deg,
-      rgba(255, 255, 255, 0.18) 0%,
-      rgba(255, 255, 255, 0.08) 40%,
-      rgba(255, 255, 255, 0.04) 100%
-    );
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
-      brightness(1.12);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))
-      brightness(1.12);
-    border: 1px solid var(--liquid-border);
-    box-shadow: var(--liquid-float), var(--liquid-rim);
+    background: var(--card-elevated);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   .glass-pill {
@@ -207,15 +201,11 @@ body {
   }
 
   .glass-sheet {
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.55) 0%,
-      rgba(255, 255, 255, 0.4) 100%
-    );
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border-top: 1px solid rgba(255, 255, 255, 0.55);
-    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    background: var(--sheet-dark);
+    backdrop-filter: blur(48px) saturate(140%);
+    -webkit-backdrop-filter: blur(48px) saturate(140%);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.55);
   }
 
   .glass-sheet-dark {
@@ -290,18 +280,33 @@ body {
   }
 
   .glass-primary {
-    background: linear-gradient(180deg, #ffffff 0%, #ebebeb 100%);
-    color: #000000;
-    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    border: 1px solid rgba(129, 140, 248, 0.4);
     box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+      0 4px 20px rgba(99, 102, 241, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
   .glass-primary svg {
-    color: #000000;
-    stroke: #000000;
+    color: #ffffff;
+    stroke: #ffffff;
+  }
+
+  .btn-primary {
+    background: #6366f1;
+    color: #ffffff;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-primary:hover {
+    background: #818cf8;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
   }
 }
 
@@ -356,7 +361,7 @@ a:hover {
 }
 
 .ios-switch[data-state="on"] {
-  background-color: #ffffff;
+  background-color: #6366f1;
 }
 
 .ios-switch-thumb {
@@ -379,7 +384,7 @@ a:hover {
 
 .ios-switch[data-state="on"] .ios-switch-thumb {
   transform: translateX(20px);
-  background-color: #000000;
+  background-color: #ffffff;
 }
 
 @keyframes habit-complete-sweep {

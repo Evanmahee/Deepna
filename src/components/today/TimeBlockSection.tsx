@@ -94,7 +94,7 @@ export function TimeBlockSection({
       >
         <div
           aria-hidden
-          className="absolute inset-y-0 left-0 z-0 bg-white transition-[width] duration-500 ease-out group-open:opacity-0"
+          className="absolute inset-y-0 left-0 z-0 bg-indigo-500/25 transition-[width] duration-500 ease-out group-open:opacity-0"
           style={{ width: `${pct}%` }}
         />
         <div className="relative z-10 flex w-full min-w-0 items-center justify-between gap-3">
@@ -102,7 +102,7 @@ export function TimeBlockSection({
             <h2
               className={`truncate text-base font-semibold ${
                 hasProgress
-                  ? "text-black group-open:text-white"
+                  ? "text-indigo-200 group-open:text-white"
                   : "text-white"
               }`}
             >
@@ -111,7 +111,7 @@ export function TimeBlockSection({
             <p
               className={`truncate text-xs ${
                 hasProgress
-                  ? "text-black/55 group-open:text-neutral-500"
+                  ? "text-indigo-200/70 group-open:text-neutral-500"
                   : "text-neutral-500"
               }`}
             >

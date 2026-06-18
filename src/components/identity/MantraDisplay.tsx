@@ -1,20 +1,37 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 
 type MantraDisplayProps = {
   value: string;
-  onChange: (v: string) => void;
+  onChange: (value: string) => void;
 };
 
 export function MantraDisplay({ value, onChange }: MantraDisplayProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
+  useEffect(() => {
+    if (!editing) {
+      setDraft(value);
+    }
+  }, [value, editing]);
+
+  function save() {
+    onChange(draft);
+    setEditing(false);
+  }
+
+  function cancel() {
+    setDraft(value);
+    setEditing(false);
+  }
+
   if (editing) {
     return (
       <div className="flex flex-col gap-2">
         <textarea
-          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 resize-none"
+          className="w-full resize-none rounded-2xl border border-white/10 bg-[#1a1a24] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none"
           rows={4}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -23,14 +40,16 @@ export function MantraDisplay({ value, onChange }: MantraDisplayProps) {
         />
         <div className="flex gap-2">
           <button
-            onClick={() => { onChange(draft); setEditing(false); }}
-            className="flex-1 rounded-xl bg-indigo-500 text-white text-sm font-medium py-2"
+            type="button"
+            onClick={save}
+            className="flex-1 rounded-xl bg-[#6366f1] py-2 text-sm font-medium text-white hover:bg-indigo-400"
           >
             Sauvegarder
           </button>
           <button
-            onClick={() => { setDraft(value); setEditing(false); }}
-            className="flex-1 rounded-xl bg-white/5 text-white/60 text-sm py-2"
+            type="button"
+            onClick={cancel}
+            className="flex-1 rounded-xl bg-white/5 py-2 text-sm text-white/60 hover:bg-white/10"
           >
             Annuler
           </button>
@@ -41,8 +60,12 @@ export function MantraDisplay({ value, onChange }: MantraDisplayProps) {
 
   return (
     <button
-      onClick={() => { setDraft(value); setEditing(true); }}
-      className="w-full text-left rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white/80 italic"
+      type="button"
+      onClick={() => {
+        setDraft(value);
+        setEditing(true);
+      }}
+      className="w-full rounded-2xl border border-white/10 bg-[#1a1a24] px-4 py-3 text-left text-sm italic text-white/80 transition-colors hover:border-white/20"
     >
       {value || "Tape ici qui tu veux devenir..."}
     </button>
