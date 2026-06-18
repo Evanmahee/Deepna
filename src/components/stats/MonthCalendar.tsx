@@ -11,17 +11,17 @@ type MonthCalendarProps = {
   habits: HabitLite[];
 };
 
-function cellClass(ratio: number): string {
-  if (ratio >= 1) {
-    return "bg-neutral-900 text-white";
+function cellClass(ratio: number, hasHabits: boolean): string {
+  if (!hasHabits) {
+    return "bg-white/10 text-neutral-500";
   }
-  if (ratio >= 0.5) {
-    return "bg-neutral-500 text-white";
+  if (ratio >= 1) {
+    return "bg-emerald-500 text-white";
   }
   if (ratio > 0) {
-    return "bg-neutral-200 text-neutral-900";
+    return "bg-amber-500 text-white";
   }
-  return "bg-slate-100 text-slate-400";
+  return "bg-white/15 text-neutral-500";
 }
 
 export function MonthCalendar({
@@ -50,13 +50,14 @@ export function MonthCalendar({
   }
 
   const wdays = ["D", "L", "M", "M", "J", "V", "S"];
+  const hasHabits = habits.length > 0;
 
   return (
     <div className="glass rounded-xl p-3 shadow-sm">
-      <p className="mb-2 text-sm font-medium text-slate-800">
+      <p className="mb-2 text-sm font-medium text-white">
         Calendrier — {month}/{year}
       </p>
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-500">
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-neutral-500">
         {wdays.map((w, i) => (
           <span key={i}>{w}</span>
         ))}
@@ -69,16 +70,27 @@ export function MonthCalendar({
             <div
               key={c.day}
               title={`${Math.round(c.ratio * 100)}%`}
-              className={`flex aspect-square items-center justify-center rounded text-xs font-medium ${cellClass(c.ratio)}`}
+              className={`flex aspect-square items-center justify-center rounded text-xs font-medium ${cellClass(c.ratio, hasHabits)}`}
             >
               {c.day}
             </div>
           ),
         )}
       </div>
-      <p className="mt-2 text-[10px] text-slate-500">
-        Noir = 100%, gris moyen = 50%+, gris clair = partiel, vide = 0%
-      </p>
+      <div className="mt-3 flex flex-wrap gap-3 text-[10px] text-neutral-500">
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500" />
+          Tout fait
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-500" />
+          Partiel
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-white/15" />
+          Rien
+        </span>
+      </div>
     </div>
   );
 }

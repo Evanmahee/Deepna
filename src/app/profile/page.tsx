@@ -70,12 +70,6 @@ export default async function ProfilePage() {
       <PageHeader title="Profil" greeting={greeting} showAdd />
       <div className="pb-28">
         <section id="identity" className="scroll-mt-2">
-          <div className="glass-bar px-4 py-3">
-            <h2 className="text-base font-semibold text-white">Identité</h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Check-ins du jour (UTC {today})
-            </p>
-          </div>
           <IdentityClient
             embedded
             initialStatement={initialStatement}
@@ -83,11 +77,13 @@ export default async function ProfilePage() {
           />
         </section>
 
-        <section id="goals" className="scroll-mt-2 border-t border-white/30">
-          <div className="glass-bar px-4 py-3">
-            <h2 className="text-base font-semibold text-white">Objectifs</h2>
+        <section id="goals" className="scroll-mt-2 border-t border-white/10">
+          <div className="px-4 py-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+              Mes objectifs
+            </h2>
           </div>
-          <div className="flex flex-col gap-6 px-3 py-4">
+          <div className="grid grid-cols-1 gap-4 px-3 pb-4 sm:grid-cols-3">
             <GoalColumn term="short" goals={byTerm(goals, "short")} />
             <GoalColumn term="mid" goals={byTerm(goals, "mid")} />
             <GoalColumn term="long" goals={byTerm(goals, "long")} />

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  bestStreakAllTimeForHabit,
   completionRate30d,
   currentStreak,
   globalCompletion30d,
@@ -36,5 +37,15 @@ describe("habit-stats", () => {
 
   it("globalCompletion30d sans habitudes retourne 0", () => {
     expect(globalCompletion30d([], [], "2026-06-01", "2026-06-03")).toBe(0);
+  });
+
+  it("bestStreakAllTimeForHabit trouve la plus longue série", () => {
+    const logs = [
+      log("2026-06-01", true),
+      log("2026-06-02", true),
+      log("2026-06-03", true),
+      log("2026-06-05", true),
+    ];
+    expect(bestStreakAllTimeForHabit(logs, "h1")).toBe(3);
   });
 });

@@ -104,6 +104,45 @@ export function globalCompletion30d(
   return Math.round((ok / cells) * 100);
 }
 
+/** Plus longue série consécutive tous temps pour une habitude. */
+export function bestStreakAllTimeForHabit(
+  logs: HabitLogRow[],
+  habitId: string,
+): number {
+  const completedDays = logs
+    .filter((l) => l.habit_id === habitId && l.completed)
+    .map((l) => l.logged_on)
+    .sort();
+  if (completedDays.length === 0) {
+    return 0;
+  }
+  const unique = [...new Set(completedDays)];
+  let best = 1;
+  let run = 1;
+  for (let i = 1; i < unique.length; i++) {
+    const prev = Date.parse(`${unique[i - 1]}T12:00:00Z`);
+    const curr = Date.parse(`${unique[i]}T12:00:00Z`);
+    if (curr - prev === 86400000) {
+      run += 1;
+      best = Math.max(best, run);
+    } else {
+      run = 1;
+    }
+  }
+  return best;
+}
+
+export function bestStreakAllTimeAmongHabits(
+  logs: HabitLogRow[],
+  habits: HabitLite[],
+): number {
+  let best = 0;
+  for (const h of habits) {
+    best = Math.max(best, bestStreakAllTimeForHabit(logs, h.id));
+  }
+  return best;
+}
+
 export function bestStreakAmongHabits(
   logs: HabitLogRow[],
   habits: HabitLite[],

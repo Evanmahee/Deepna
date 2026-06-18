@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { GoalTerm } from "@/types/goals";
 
 import { glassInputClass } from "@/lib/glass";
@@ -11,16 +11,27 @@ const inputClass = `${glassInputClass} placeholder:text-slate-400`;
 type CreateGoalModalProps = {
   open: boolean;
   onClose: () => void;
+  initialTerm?: GoalTerm;
 };
 
-export function CreateGoalModal({ open, onClose }: CreateGoalModalProps) {
+export function CreateGoalModal({
+  open,
+  onClose,
+  initialTerm = "short",
+}: CreateGoalModalProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [term, setTerm] = useState<GoalTerm>("short");
+  const [term, setTerm] = useState<GoalTerm>(initialTerm);
   const [targetDate, setTargetDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setTerm(initialTerm);
+    }
+  }, [open, initialTerm]);
 
   if (!open) {
     return null;

@@ -21,9 +21,9 @@ export function moodEmoji(mood: number): string {
 
 export function moodLabel(mood: number): string {
   const labels: Record<number, string> = {
-    1: "Productif",
+    1: "Bas",
     2: "Neutre",
-    3: "Perdu",
+    3: "Bien",
   };
   return labels[mood] ?? String(mood);
 }

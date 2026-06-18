@@ -21,7 +21,6 @@ const PERIODS: { period: IdentityPeriod; title: string }[] = [
 type Props = {
   initialStatement: string | null;
   checkins: IdentityCheckinRow[];
-  /** Intégré dans une page plus large (ex. profil) — sans marge basse nav */
   embedded?: boolean;
 };
 
@@ -32,12 +31,6 @@ function byPeriod(rows: IdentityCheckinRow[]) {
   }
   return m;
 }
-
-const PERIOD_LABEL: Record<IdentityPeriod, string> = {
-  morning: "ce matin",
-  afternoon: "cet apm",
-  evening: "ce soir",
-};
 
 export function IdentityClient({
   initialStatement,
@@ -85,41 +78,45 @@ export function IdentityClient({
   return (
     <div
       className={[
-        "mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-6",
+        "mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-6",
         embedded ? "" : "pb-28",
       ].join(" ")}
     >
-      <MantraDisplay value={mantra} onChange={(v) => void saveMantra(v)} />
-      {mantraError ? (
-        <p className="-mt-4 text-xs text-red-400" role="alert">
-          {mantraError}
-        </p>
-      ) : null}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+          Mon mantra
+        </h2>
+        <MantraDisplay value={mantra} onChange={(v) => void saveMantra(v)} />
+        {mantraError ? (
+          <p className="mt-2 text-xs text-red-400" role="alert">
+            {mantraError}
+          </p>
+        ) : null}
+      </section>
 
-      <div className="glass rounded-xl px-4 py-3 text-sm text-neutral-300">
-        <p>
-          Aujourd&apos;hui :{" "}
-          <span className="font-mono font-semibold text-white">{dayTotal}</span>{" "}
-          / 18 répétitions
-        </p>
-        <p className="mt-1 text-xs text-neutral-500">
-          Période active ({PERIOD_LABEL[active]}) :{" "}
-          <span className="font-mono text-neutral-300">
-            {counts[active] ?? 0}/{IDENTITY_REPS[active]}
+      <section>
+        <div className="mb-3 flex items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+            Check-ins identité
+          </h2>
+          <span className="text-xs text-neutral-500">
+            {dayTotal}/18 aujourd&apos;hui
           </span>
-        </p>
-      </div>
-
-      {PERIODS.map(({ period, title }) => (
-        <IdentitySection
-          key={period}
-          period={period}
-          title={title}
-          reps={IDENTITY_REPS[period]}
-          checkin={map[period]}
-          mantra={mantra}
-        />
-      ))}
+        </div>
+        <div className="flex flex-col gap-4">
+          {PERIODS.map(({ period, title }) => (
+            <IdentitySection
+              key={period}
+              period={period}
+              title={title}
+              reps={IDENTITY_REPS[period]}
+              mantra={mantra}
+              isActive={period === active}
+              currentCount={counts[period] ?? 0}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
