@@ -5,6 +5,7 @@ import { buildCompletionByDay } from "@/lib/day-completion";
 import type { HabitLite } from "@/lib/habit-stats";
 import { DateStrip } from "@/components/today/DateStrip";
 import { TimeBlockSection } from "@/components/today/TimeBlockSection";
+import { FloatingAddButton } from "@/components/today/FloatingAddButton";
 import { TodayPageHeader } from "@/components/today/TodayPageHeader";
 import type { HabitLogRow, HabitRowData, TimeBlockRow } from "@/types/today";
 
@@ -102,8 +103,8 @@ export async function TodayPage({ searchParams }: TodayPageProps) {
       <main className="flex-1 space-y-1 px-3 pb-4 pt-6">
         {habits.length === 0 ? (
           <p className="glass rounded-xl px-4 py-6 text-center text-sm text-neutral-400">
-            Commence par créer ta première habitude → utilise le bouton{" "}
-            <span className="font-semibold text-white">+</span> en haut à droite.
+            Commence par créer ta première habitude → appuie sur le bouton{" "}
+            <span className="font-semibold text-white">+</span> en bas à droite.
           </p>
         ) : null}
         {timeBlocks.map((block, i) => (
@@ -124,6 +125,7 @@ export async function TodayPage({ searchParams }: TodayPageProps) {
           defaultOpen={timeBlocks.length === 0}
         />
       </main>
+      <FloatingAddButton />
     </div>
   );
 }

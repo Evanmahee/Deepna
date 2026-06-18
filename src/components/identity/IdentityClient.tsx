@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MantraDisplay } from "@/components/identity/MantraDisplay";
 import { IdentitySection } from "@/components/identity/IdentitySection";
@@ -43,7 +44,9 @@ export function IdentityClient({
   checkins,
   embedded = false,
 }: Props) {
+  const router = useRouter();
   const [mantra, setMantra] = useState(initialStatement ?? "");
+  const [mantraError, setMantraError] = useState<string | null>(null);
   const map = byPeriod(checkins);
   const active = activeIdentityPeriod();
 
@@ -53,6 +56,32 @@ export function IdentityClient({
   }
   const dayTotal = totalRepsToday(counts);
 
+  async function saveMantra(next: string) {
+    const previous = mantra;
+    setMantra(next);
+    setMantraError(null);
+    try {
+      const res = await fetch("/api/identity/statement", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identity_statement: next.trim() || null,
+        }),
+        credentials: "same-origin",
+      });
+      const j = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        throw new Error(j.error ?? "Sauvegarde impossible");
+      }
+      router.refresh();
+    } catch (e) {
+      setMantra(previous);
+      setMantraError(
+        e instanceof Error ? e.message : "Impossible de sauvegarder le mantra",
+      );
+    }
+  }
+
   return (
     <div
       className={[
@@ -60,7 +89,12 @@ export function IdentityClient({
         embedded ? "" : "pb-28",
       ].join(" ")}
     >
-      <MantraDisplay value={mantra} onChange={setMantra} />
+      <MantraDisplay value={mantra} onChange={(v) => void saveMantra(v)} />
+      {mantraError ? (
+        <p className="-mt-4 text-xs text-red-400" role="alert">
+          {mantraError}
+        </p>
+      ) : null}
 
       <div className="glass rounded-xl px-4 py-3 text-sm text-neutral-300">
         <p>
