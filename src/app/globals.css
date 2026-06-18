@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0f;
+  --foreground: #ffffff;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --border: #333333;
+  --input-bg: #111111;
+  --muted: #a1a1aa;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-border-subtle: var(--border);
+  --color-input-bg: var(--input-bg);
+  --color-muted: var(--muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+  background-color: #0a0a0f;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background-color: #0a0a0f;
+  color: #ffffff;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+a {
+  color: var(--accent);
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@keyframes landing-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-scroll-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-fade {
+  animation: landing-fade-in 0.7s ease forwards;
+}
+
+.landing-fade-delay-1 {
+  animation-delay: 0.15s;
+  opacity: 0;
+}
+
+.landing-fade-delay-2 {
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+.landing-scroll-fade {
+  opacity: 0;
+  animation: landing-scroll-in 0.65s ease forwards;
+  animation-timeline: view();
+  animation-range: entry 0% cover 35%;
+}
+
+@supports not (animation-timeline: view()) {
+  .landing-scroll-fade {
+    animation: landing-scroll-in 0.65s ease forwards;
+    animation-timeline: auto;
+  }
 }
