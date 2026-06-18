@@ -74,7 +74,7 @@ export function HabitIconPicker({ emoji, color, name, onSelect, onBack }: Props)
           <HabitCardPreview
             emoji={preview}
             name={name?.trim() || "Nom de l'habitude"}
-            color={color}
+            color={color ?? ""}
           />
           {tab === "text" ? (
             <>
