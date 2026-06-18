@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/route-handler";
 import { todayUtcString } from "@/lib/dates";
+import { parseRepCount } from "@/lib/identity-reps";
 import { serializeSupabaseError } from "@/lib/supabase-errors";
 import type { IdentityPeriod } from "@/types/identity";
 
@@ -28,18 +29,10 @@ export async function POST(request: Request) {
 
   const todayUtc = todayUtcString();
   const checked_at = new Date().toISOString();
-  const row = {
-    user_id: user.id,
-    logged_on: todayUtc,
-    period,
-    prompt: body.text_snapshot || "",
-    reflection: "",
-    checked_at,
-  };
 
   const { data: existing, error: selectErr } = await supabase
     .from("identity_checkins")
-    .select("id")
+    .select("id, reflection")
     .eq("user_id", user.id)
     .eq("logged_on", todayUtc)
     .eq("period", period)
@@ -52,10 +45,17 @@ export async function POST(request: Request) {
     );
   }
 
+  const nextCount = parseRepCount(existing?.reflection) + 1;
+  const reflection = String(nextCount);
+
   if (existing?.id) {
     const { error } = await supabase
       .from("identity_checkins")
-      .update({ prompt: row.prompt, reflection: "", checked_at: row.checked_at })
+      .update({
+        prompt: body.text_snapshot || "",
+        reflection,
+        checked_at,
+      })
       .eq("id", existing.id)
       .eq("user_id", user.id);
     if (error) {
@@ -65,6 +65,14 @@ export async function POST(request: Request) {
       );
     }
   } else {
+    const row = {
+      user_id: user.id,
+      logged_on: todayUtc,
+      period,
+      prompt: body.text_snapshot || "",
+      reflection,
+      checked_at,
+    };
     const { error } = await supabase.from("identity_checkins").insert(row);
     if (error) {
       return NextResponse.json(
@@ -74,5 +82,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, count: nextCount });
 }

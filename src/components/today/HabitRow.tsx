@@ -4,18 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import { EditHabitModal } from "@/components/today/EditHabitModal";
+import { HabitInspectModal } from "@/components/today/HabitInspectModal";
+import { habitCardSurfaceStyle } from "@/components/today/HabitCardPreview";
 import type { HabitRowData } from "@/types/today";
 
 type HabitRowProps = {
   habit: HabitRowData;
   logDate: string;
   completedToday: boolean;
-};
-
-const typeBg: Record<HabitRowData["habit_type"], string> = {
-  good: "#0d2b1a",
-  bad: "#1a0d2b",
-  neutral: "#1a1a1a",
 };
 
 export function HabitRow({
@@ -30,6 +26,7 @@ export function HabitRow({
   const [pending, setPending] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [inspecting, setInspecting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -101,25 +98,37 @@ export function HabitRow({
   }
 
   const showMissedBadge = missed > 0 && !completed;
+  const { style, isLight } = habitCardSurfaceStyle(habit.icon_color);
+  const mutedControl = isLight
+    ? "text-black/45 hover:bg-black/10 hover:text-black/80"
+    : "text-white/50 hover:bg-white/15 hover:text-white/90";
+  const checkIdle = isLight ? "border-black/25 hover:border-black/60" : "border-white/35 hover:border-white/70";
+  const checkDone = isLight
+    ? "border-black/80 bg-black/5"
+    : "border-white/80 bg-white/10";
 
   return (
     <>
       <div
-        className={`relative flex items-center gap-2 rounded-xl border border-[#2a2a2a] px-2 py-2.5 transition-opacity duration-200 sm:gap-3 sm:px-3 ${
-          completed ? "opacity-80" : "opacity-100"
+        className={`relative flex items-center gap-2 rounded-xl border px-2 py-2.5 shadow-sm transition-opacity duration-200 sm:gap-3 sm:px-3 ${
+          completed ? "opacity-75" : "opacity-100"
         }`}
-        style={{ backgroundColor: typeBg[habit.habit_type] }}
+        style={style}
       >
         <span className="shrink-0 text-lg sm:text-xl" aria-hidden>
           {habit.icon_emoji || "•"}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-white sm:text-base">
-            {habit.name}
-          </p>
+          <p className="truncate text-sm font-semibold sm:text-base">{habit.name}</p>
         </div>
         {showMissedBadge ? (
-          <span className="shrink-0 rounded bg-red-600/90 px-1.5 py-0.5 text-[10px] font-bold text-white sm:px-2 sm:text-xs">
+          <span
+            className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold sm:px-2 sm:text-xs ${
+              isLight
+                ? "bg-black/10 text-black/80 ring-1 ring-black/15"
+                : "bg-white/15 text-white ring-1 ring-white/20"
+            }`}
+          >
             -{missed}
           </span>
         ) : null}
@@ -130,15 +139,25 @@ export function HabitRow({
             onClick={() => setMenuOpen((o) => !o)}
             aria-label="Options habitude"
             aria-expanded={menuOpen}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/10 hover:text-white disabled:opacity-50"
+            className={`flex h-8 w-8 items-center justify-center rounded-lg transition disabled:opacity-50 ${mutedControl}`}
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
           {menuOpen ? (
-            <div className="absolute right-0 top-full z-20 mt-1 min-w-[9rem] overflow-hidden rounded-lg border border-[#333] bg-[#161616] py-1 shadow-xl">
+            <div className="glass-strong absolute right-0 top-full z-20 mt-1 min-w-[9rem] overflow-hidden rounded-xl py-1 shadow-lg shadow-slate-900/10">
               <button
                 type="button"
-                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-[#222]"
+                className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-white/40"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setInspecting(true);
+                }}
+              >
+                Inspecter
+              </button>
+              <button
+                type="button"
+                className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-white/40"
                 onClick={() => {
                   setMenuOpen(false);
                   setEditing(true);
@@ -148,7 +167,7 @@ export function HabitRow({
               </button>
               <button
                 type="button"
-                className="block w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-[#222]"
+                className="block w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-white/40"
                 onClick={() => void archive()}
               >
                 Supprimer
@@ -162,17 +181,12 @@ export function HabitRow({
           onClick={() => void toggle()}
           aria-pressed={completed}
           aria-label={completed ? "Marquer non fait" : "Marquer fait"}
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-opacity duration-200 disabled:opacity-50 sm:h-9 sm:w-9 ${
-            completed
-              ? "border-[#6366f1] bg-[#6366f1]"
-              : "border-zinc-500 bg-transparent hover:border-[#6366f1]"
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition disabled:opacity-50 sm:h-9 sm:w-9 ${
+            completed ? checkDone : checkIdle
           }`}
         >
           {completed ? (
-            <span
-              className="text-sm font-bold leading-none text-white sm:text-base"
-              aria-hidden
-            >
+            <span className="text-sm font-bold leading-none sm:text-base" aria-hidden>
               ✓
             </span>
           ) : null}
@@ -181,6 +195,10 @@ export function HabitRow({
       <EditHabitModal
         habit={editing ? habit : null}
         onClose={() => setEditing(false)}
+      />
+      <HabitInspectModal
+        habit={inspecting ? habit : null}
+        onClose={() => setInspecting(false)}
       />
     </>
   );

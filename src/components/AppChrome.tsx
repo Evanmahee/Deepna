@@ -30,8 +30,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div
-        className={`flex min-h-full flex-1 flex-col ${
-          showNav ? "pb-16" : hideChrome ? "" : "pb-16"
+        className={`flex min-h-full min-w-0 flex-1 flex-col overflow-x-hidden ${
+          showNav ? "pb-24" : hideChrome ? "" : "pb-16"
         }`}
       >
         {children}

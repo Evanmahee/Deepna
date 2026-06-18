@@ -18,20 +18,11 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
   return (
-    <div className="min-h-full flex-1 bg-[#0a0a0f] text-white">
-      <PageHeader
-        title="Paramètres"
-        firstName={profile?.display_name?.trim() ?? null}
-      />
+    <div className="min-h-full flex-1">
+      <PageHeader title="Paramètres" />
       <div className="mx-auto max-w-lg px-4 py-6 pb-28">
-        <Suspense fallback={<p className="text-sm text-zinc-500">…</p>}>
+        <Suspense fallback={<p className="text-sm text-slate-500">…</p>}>
           <SettingsClient />
         </Suspense>
       </div>

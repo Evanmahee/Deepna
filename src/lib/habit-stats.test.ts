@@ -14,9 +14,8 @@ function log(day: string, completed: boolean): HabitLogRow {
     habit_id: "h1",
     user_id: "u1",
     logged_on: day,
-    note: null,
     completed,
-    created_at: `${day}T12:00:00.000Z`,
+    completed_at: completed ? `${day}T12:00:00.000Z` : null,
   };
 }
 

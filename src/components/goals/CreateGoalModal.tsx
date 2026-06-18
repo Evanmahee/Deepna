@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { GoalTerm } from "@/types/goals";
 
+import { glassInputClass } from "@/lib/glass";
+
+const inputClass = `${glassInputClass} placeholder:text-slate-400`;
+
 type CreateGoalModalProps = {
   open: boolean;
   onClose: () => void;
@@ -53,29 +57,29 @@ export function CreateGoalModal({ open, onClose }: CreateGoalModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60">
+    <div className="glass-overlay fixed inset-0 z-50 flex flex-col justify-end">
       <button
         type="button"
         className="flex-1 cursor-default"
         aria-label="Fermer"
         onClick={onClose}
       />
-      <div className="max-h-[85vh] overflow-y-auto rounded-t-2xl border border-[#333] bg-[#0a0a0f] px-4 pb-8 pt-4">
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-600" />
-        <h3 className="mb-3 text-lg font-semibold text-white">Nouvel objectif</h3>
+      <div className="glass-sheet max-h-[85vh] overflow-y-auto rounded-t-2xl px-4 pb-8 pt-4">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
+        <h3 className="mb-3 text-lg font-semibold text-slate-900">Nouvel objectif</h3>
         <div className="space-y-3">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Titre"
-            className="w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-sm text-white"
+            className={inputClass}
           />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description"
             rows={3}
-            className="w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-sm text-white"
+            className={inputClass}
           />
           <div className="flex gap-2">
             {(["short", "mid", "long"] as const).map((t) => (
@@ -83,10 +87,10 @@ export function CreateGoalModal({ open, onClose }: CreateGoalModalProps) {
                 key={t}
                 type="button"
                 onClick={() => setTerm(t)}
-                className={`flex-1 rounded-lg border py-2 text-xs font-medium ${
+                className={`flex-1 rounded-xl border py-2 text-xs font-semibold ${
                   term === t
-                    ? "border-[#6366f1] bg-[#6366f1]/20 text-white"
-                    : "border-[#333] text-zinc-400"
+                    ? "glass-subtle border-neutral-900/40 text-neutral-900"
+                    : "glass-pill text-slate-500"
                 }`}
               >
                 {t === "short" ? "Court" : t === "mid" ? "Moyen" : "Long"}
@@ -97,14 +101,14 @@ export function CreateGoalModal({ open, onClose }: CreateGoalModalProps) {
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
-            className="w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-sm text-white"
+            className={inputClass}
           />
-          {err ? <p className="text-xs text-red-400">{err}</p> : null}
+          {err ? <p className="text-xs text-neutral-700">{err}</p> : null}
           <button
             type="button"
             disabled={loading || !title.trim()}
             onClick={() => void submit()}
-            className="w-full rounded-lg bg-[#6366f1] py-3 text-sm font-semibold text-white disabled:opacity-50"
+            className="w-full rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white shadow-md hover:bg-neutral-800 disabled:opacity-50"
           >
             {loading ? "…" : "Créer"}
           </button>

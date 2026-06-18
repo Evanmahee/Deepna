@@ -13,15 +13,15 @@ type MonthCalendarProps = {
 
 function cellClass(ratio: number): string {
   if (ratio >= 1) {
-    return "bg-emerald-800 text-white";
+    return "bg-neutral-900 text-white";
   }
   if (ratio >= 0.5) {
-    return "bg-emerald-600/70 text-white";
+    return "bg-neutral-500 text-white";
   }
   if (ratio > 0) {
-    return "bg-emerald-900/40 text-zinc-300";
+    return "bg-neutral-200 text-neutral-900";
   }
-  return "bg-zinc-800 text-zinc-500";
+  return "bg-slate-100 text-slate-400";
 }
 
 export function MonthCalendar({
@@ -52,11 +52,11 @@ export function MonthCalendar({
   const wdays = ["D", "L", "M", "M", "J", "V", "S"];
 
   return (
-    <div className="rounded-xl border border-[#333] bg-[#111] p-3">
-      <p className="mb-2 text-sm font-medium text-zinc-300">
+    <div className="glass rounded-xl p-3 shadow-sm">
+      <p className="mb-2 text-sm font-medium text-slate-800">
         Calendrier — {month}/{year}
       </p>
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-zinc-500">
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-500">
         {wdays.map((w, i) => (
           <span key={i}>{w}</span>
         ))}
@@ -76,8 +76,8 @@ export function MonthCalendar({
           ),
         )}
       </div>
-      <p className="mt-2 text-[10px] text-zinc-500">
-        Vert foncé = 100%, vert = 50%+, gris = 0%
+      <p className="mt-2 text-[10px] text-slate-500">
+        Noir = 100%, gris moyen = 50%+, gris clair = partiel, vide = 0%
       </p>
     </div>
   );

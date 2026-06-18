@@ -68,31 +68,31 @@ export function CheckinForm({ onSuccess }: CheckinFormProps) {
   }
 
   return (
-    <div className="rounded-xl border border-[#333] bg-[#111] p-4">
-      <p className="text-center text-3xl font-mono font-semibold text-white">
+    <div className="glass rounded-xl p-4 shadow-sm">
+      <p className="text-center text-3xl font-mono font-semibold text-slate-900">
         {timeLabel}
       </p>
-      <label className="mt-4 block text-sm text-zinc-400">
+      <label className="mt-4 block text-sm font-medium text-slate-600">
         Qu&apos;as-tu fait cette heure ?
       </label>
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={4}
-        className="mt-1 w-full rounded-lg border border-[#333] bg-[#0a0a0f] px-3 py-2 text-sm text-white"
+        className="glass-input mt-1 w-full rounded-xl px-3 py-2 text-sm text-slate-900"
         placeholder="Notes…"
       />
-      <p className="mt-3 text-xs text-zinc-500">Tag</p>
+      <p className="mt-3 text-xs text-slate-500">Tag</p>
       <div className="mt-1 flex gap-2">
         {MOODS.map(({ v, label }) => (
           <button
             key={v}
             type="button"
             onClick={() => setMood(v)}
-            className={`flex-1 rounded-lg border py-2 text-xs font-medium ${
+            className={`flex-1 rounded-xl border py-2 text-xs font-semibold ${
               mood === v
-                ? "border-[#6366f1] bg-[#6366f1]/25 text-white"
-                : "border-[#333] text-zinc-400"
+                ? "glass-subtle border-neutral-900/40 text-neutral-900"
+                : "glass-pill text-slate-500"
             }`}
           >
             {label}
@@ -100,16 +100,16 @@ export function CheckinForm({ onSuccess }: CheckinFormProps) {
         ))}
       </div>
       {success ? (
-        <p className="mt-2 text-sm font-medium text-emerald-400" role="status">
+        <p className="mt-2 text-sm font-medium text-neutral-900" role="status">
           ✓ Enregistré !
         </p>
       ) : null}
-      {err ? <p className="mt-2 text-xs text-red-400">{err}</p> : null}
+      {err ? <p className="mt-2 text-xs text-neutral-700">{err}</p> : null}
       <button
         type="button"
         disabled={loading}
         onClick={() => void send()}
-        className="mt-4 w-full rounded-lg bg-[#6366f1] py-3 text-sm font-semibold text-white disabled:opacity-50"
+        className="mt-4 w-full rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white shadow-md hover:bg-neutral-800 disabled:opacity-50"
       >
         {loading ? "Envoi…" : "Envoyer"}
       </button>

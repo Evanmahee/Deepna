@@ -10,7 +10,7 @@ export function GoalsFloatingAdd() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#6366f1] text-3xl font-light text-white shadow-lg"
+        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-900 text-3xl font-light text-white shadow-lg shadow-neutral-900/15"
         aria-label="Nouvel objectif"
       >
         +

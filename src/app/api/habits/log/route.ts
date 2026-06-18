@@ -72,7 +72,9 @@ export async function POST(request: Request) {
       user_id: user.id,
       logged_on: loggedOn,
       completed: nextCompleted,
-      note: null,
+      ...(nextCompleted
+        ? { completed_at: new Date().toISOString() }
+        : { completed_at: null }),
     },
     { onConflict: "habit_id,logged_on" },
   );

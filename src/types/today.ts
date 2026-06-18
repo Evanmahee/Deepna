@@ -20,8 +20,11 @@ export type HabitRowData = {
   name: string;
   icon_emoji: string | null;
   habit_type: "good" | "bad" | "neutral";
+  description: string | null;
+  icon_color: string | null;
   missed_days_count: number;
   archived: boolean;
+  sort_order: number;
 };
 
 export type HabitLogRow = {
@@ -29,7 +32,6 @@ export type HabitLogRow = {
   habit_id: string;
   user_id: string;
   logged_on: string;
-  note: string | null;
   completed: boolean;
-  created_at: string;
+  completed_at: string | null;
 };

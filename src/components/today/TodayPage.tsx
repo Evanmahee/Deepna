@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { parseLoggedOnParam } from "@/lib/dates";
+import { parseLoggedOnParam, addDaysUtc } from "@/lib/dates";
+import { buildCompletionByDay } from "@/lib/day-completion";
+import type { HabitLite } from "@/lib/habit-stats";
 import { DateStrip } from "@/components/today/DateStrip";
 import { TimeBlockSection } from "@/components/today/TimeBlockSection";
-import { FloatingAddButton } from "@/components/today/FloatingAddButton";
-import { PageHeader } from "@/components/nav/PageHeader";
+import { TodayPageHeader } from "@/components/today/TodayPageHeader";
 import type { HabitLogRow, HabitRowData, TimeBlockRow } from "@/types/today";
 
 type TodayPageProps = {
@@ -26,7 +27,7 @@ export async function TodayPage({ searchParams }: TodayPageProps) {
     redirect("/login");
   }
 
-  const [tbRes, habitsRes, logsRes, profileRes] = await Promise.all([
+  const [tbRes, habitsRes, logsRes] = await Promise.all([
     supabase
       .from("time_blocks")
       .select("*")
@@ -43,17 +44,34 @@ export async function TodayPage({ searchParams }: TodayPageProps) {
       .select("*")
       .eq("user_id", user.id)
       .eq("logged_on", logDate),
-    supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", user.id)
-      .maybeSingle(),
   ]);
 
   const timeBlocks = (tbRes.data ?? []) as TimeBlockRow[];
   const habits = (habitsRes.data ?? []) as HabitRowData[];
   const logs = (logsRes.data ?? []) as HabitLogRow[];
-  const firstName = profileRes.data?.display_name?.trim() ?? null;
+
+  const habitLite: HabitLite[] = habits.map((h) => ({
+    id: h.id,
+    name: h.name,
+    missed_days_count: h.missed_days_count,
+  }));
+
+  const stripFrom = addDaysUtc(logDate, -42);
+  const stripTo = addDaysUtc(logDate, 14);
+
+  const { data: stripLogsData } = await supabase
+    .from("habit_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("logged_on", stripFrom)
+    .lte("logged_on", stripTo);
+
+  const stripLogs = (stripLogsData ?? []) as HabitLogRow[];
+  const stripDays: string[] = [];
+  for (let i = -42; i <= 14; i++) {
+    stripDays.push(addDaysUtc(logDate, i));
+  }
+  const completionByDay = buildCompletionByDay(stripLogs, habitLite, stripDays);
 
   const logsByHabitId: Record<string, HabitLogRow> = {};
   for (const log of logs) {
@@ -67,24 +85,25 @@ export async function TodayPage({ searchParams }: TodayPageProps) {
     arr.push(h);
     byBlock.set(key, arr);
   }
+  for (const arr of byBlock.values()) {
+    arr.sort(
+      (a, b) =>
+        (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
+        a.name.localeCompare(b.name, "fr"),
+    );
+  }
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <PageHeader
-        title="Aujourd'hui"
-        subtitle={new Date(`${logDate}T12:00:00Z`).toLocaleDateString("fr-FR", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-        })}
-        firstName={firstName}
-      />
-      <DateStrip selectedDate={logDate} />
-      <main className="flex-1 space-y-1 px-3 py-4">
+    <div className="flex min-h-full min-w-0 flex-1 flex-col overflow-x-hidden">
+      <div className="sticky top-0 z-10">
+        <TodayPageHeader />
+        <DateStrip selectedDate={logDate} completionByDay={completionByDay} />
+      </div>
+      <main className="flex-1 space-y-1 px-3 pb-4 pt-6">
         {habits.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-[#333] bg-[#111] px-4 py-6 text-center text-sm text-zinc-400">
+          <p className="glass rounded-xl px-4 py-6 text-center text-sm text-neutral-400">
             Commence par créer ta première habitude → utilise le bouton{" "}
-            <span className="text-zinc-200">+</span> en bas à droite.
+            <span className="font-semibold text-white">+</span> en haut à droite.
           </p>
         ) : null}
         {timeBlocks.map((block, i) => (
@@ -105,7 +124,6 @@ export async function TodayPage({ searchParams }: TodayPageProps) {
           defaultOpen={timeBlocks.length === 0}
         />
       </main>
-      <FloatingAddButton timeBlocks={timeBlocks} />
     </div>
   );
 }

@@ -3,8 +3,8 @@
   "short_name": "Deepna",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#6366f1",
+  "background_color": "#ffffff",
+  "theme_color": "#0a0a0a",
   "icons": [
     {
       "src": "/icon-192.png",

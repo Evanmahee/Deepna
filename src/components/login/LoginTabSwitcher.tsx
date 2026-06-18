@@ -10,15 +10,15 @@ type LoginTabSwitcherProps = {
 export function LoginTabSwitcher({ mode, onModeChange }: LoginTabSwitcherProps) {
   const tabClass = (active: boolean) =>
     [
-      "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+      "flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
       active
-        ? "bg-indigo-600 text-white"
-        : "text-zinc-400 hover:text-white",
+        ? "bg-neutral-900 text-white shadow-sm"
+        : "text-slate-500 hover:text-slate-800",
     ].join(" ");
 
   return (
     <div
-      className="flex gap-1 rounded-lg border border-[#333] bg-[#111] p-1"
+      className="glass flex gap-1 rounded-xl p-1 shadow-sm"
       role="tablist"
     >
       <button

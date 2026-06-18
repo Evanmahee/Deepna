@@ -52,24 +52,24 @@ export function GoalCard({ goal }: GoalCardProps) {
     : "—";
 
   return (
-    <article className="rounded-lg border border-[#333] bg-[#111] p-3">
+    <article className="glass rounded-xl p-3 shadow-sm">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold text-white">{goal.title}</h3>
+        <h3 className="font-semibold text-slate-900">{goal.title}</h3>
         {goal.term ? (
-          <span className="shrink-0 rounded-full bg-[#6366f1]/15 px-2 py-0.5 text-[10px] font-medium text-[#a5b4fc]">
+          <span className="glass-subtle shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium text-neutral-900">
             {TERM_LABELS[goal.term] ?? goal.term}
           </span>
         ) : null}
       </div>
       {goal.description ? (
-        <p className="mt-1 text-sm text-zinc-400">{goal.description}</p>
+        <p className="mt-1 text-sm text-slate-600">{goal.description}</p>
       ) : null}
-      <p className="mt-2 text-xs text-zinc-500">Cible : {dateLabel}</p>
+      <p className="mt-2 text-xs text-slate-500">Cible : {dateLabel}</p>
       <button
         type="button"
         disabled={pending}
         onClick={() => void cycle()}
-        className="mt-3 rounded-full border border-[#6366f1]/50 bg-[#6366f1]/15 px-3 py-1 text-xs font-medium text-[#a5b4fc] hover:bg-[#6366f1]/25 disabled:opacity-50"
+        className="glass-pill mt-3 rounded-full px-3 py-1 text-xs font-medium text-neutral-900 hover:bg-white/72 disabled:opacity-50"
       >
         {LABELS[status]}
       </button>

@@ -33,15 +33,15 @@ export function MantraDisplay({ value, onChange }: MantraDisplayProps) {
   }
 
   return (
-    <div className="rounded-xl border border-[#333] bg-[#111] p-4">
-      <label className="mb-2 block text-sm font-medium text-zinc-300">
+    <div className="glass rounded-xl p-4 shadow-sm">
+      <label className="mb-2 block text-sm font-medium text-slate-700">
         Mantra (identité)
       </label>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={6}
-        className="w-full resize-y rounded-lg border border-[#333] bg-[#0a0a0f] px-3 py-3 text-base text-white placeholder:text-zinc-600 focus:border-[#6366f1] focus:outline-none"
+        className="glass-input w-full resize-y rounded-xl px-3 py-3 text-base text-slate-900 placeholder:text-slate-400"
         placeholder="Qui je suis, ce que je deviens…"
       />
       <div className="mt-3 flex items-center gap-3">
@@ -49,11 +49,11 @@ export function MantraDisplay({ value, onChange }: MantraDisplayProps) {
           type="button"
           disabled={saving}
           onClick={() => void save()}
-          className="rounded-lg bg-[#6366f1] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 disabled:opacity-50"
         >
           {saving ? "…" : "Enregistrer le mantra"}
         </button>
-        {msg ? <span className="text-xs text-zinc-400">{msg}</span> : null}
+        {msg ? <span className="text-xs text-slate-500">{msg}</span> : null}
       </div>
     </div>
   );

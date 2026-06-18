@@ -53,13 +53,13 @@ export function LoginGoogleButton({ disabled }: LoginGoogleButtonProps) {
         type="button"
         onClick={() => void handleGoogle()}
         disabled={disabled || busy}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#333] bg-[#111] px-4 py-3 text-sm font-medium text-white transition-colors hover:border-indigo-500 hover:bg-[#161616] disabled:cursor-not-allowed disabled:opacity-50"
+        className="glass-btn flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span aria-hidden>Google</span>
         <span>{busy ? "Redirection…" : "Continuer avec Google"}</span>
       </button>
       {localError ? (
-        <p className="text-center text-xs text-red-400" role="alert">
+        <p className="text-center text-xs text-neutral-700" role="alert">
           {localError}
         </p>
       ) : null}

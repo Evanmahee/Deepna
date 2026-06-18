@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { glassInputClass } from "@/lib/glass";
 
 const SUGGESTIONS = [
   { id: "sport", name: "Sport", emoji: "🏋️" },
@@ -121,12 +122,12 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto flex min-h-full max-w-lg flex-col gap-6 px-4 py-8 pb-28">
-      <header className="border-b border-[#222] pb-4">
-        <p className="text-xs font-medium text-[#6366f1]">Étape {step} / 2</p>
-        <h1 className="text-xl font-semibold text-white">
+      <header className="glass-bar -mx-4 px-4 pb-4 pt-2">
+        <p className="text-xs font-medium text-neutral-900">Étape {step} / 2</p>
+        <h1 className="text-xl font-semibold text-slate-900">
           {step === 1 ? "Bienvenue" : "Crée tes premières habitudes"}
         </h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-slate-600">
           {step === 1
             ? "Quelques infos pour personnaliser Deepna."
             : "Sélectionne celles qui te parlent — tu pourras en ajouter d'autres plus tard."}
@@ -136,26 +137,26 @@ export default function OnboardingPage() {
       {step === 1 ? (
         <>
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-zinc-300">Ton prénom</span>
+            <span className="text-sm font-medium text-slate-700">Ton prénom</span>
             <input
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className="w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2.5 text-white outline-none focus:border-[#6366f1]"
+              className={`${glassInputClass} py-2.5 outline-none`}
               autoComplete="given-name"
               placeholder="Ex. Baptiste"
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-zinc-300">
+            <span className="text-sm font-medium text-slate-700">
               Qui veux-tu devenir ?
             </span>
             <textarea
               value={statement}
               onChange={(e) => setStatement(e.target.value)}
               rows={5}
-              className="w-full resize-y rounded-lg border border-[#333] bg-[#111] px-3 py-2.5 text-white outline-none focus:border-[#6366f1]"
+              className={`${glassInputClass} resize-y py-2.5 outline-none`}
               placeholder="Une phrase ou un paragraphe…"
             />
           </label>
@@ -164,7 +165,7 @@ export default function OnboardingPage() {
             type="button"
             disabled={loading}
             onClick={() => void goToStep2()}
-            className="rounded-lg bg-[#6366f1] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white shadow-md hover:bg-neutral-800 disabled:opacity-50"
           >
             {loading ? "…" : "Continuer"}
           </button>
@@ -181,8 +182,8 @@ export default function OnboardingPage() {
                   onClick={() => toggleSuggestion(s.id)}
                   className={`rounded-xl border px-3 py-3 text-left text-sm transition ${
                     on
-                      ? "border-[#6366f1] bg-[#6366f1]/20 text-white"
-                      : "border-[#333] bg-[#111] text-zinc-300 hover:border-[#555]"
+                      ? "glass-subtle border-neutral-900/40 text-neutral-900"
+                      : "glass text-slate-700"
                   }`}
                 >
                   <span className="mr-1.5" aria-hidden>
@@ -198,7 +199,7 @@ export default function OnboardingPage() {
             type="button"
             disabled={loading}
             onClick={() => void handleFinish()}
-            className="rounded-lg bg-[#6366f1] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white shadow-md hover:bg-neutral-800 disabled:opacity-50"
           >
             {loading ? "…" : "Commencer"}
           </button>
@@ -206,17 +207,17 @@ export default function OnboardingPage() {
       )}
 
       {error ? (
-        <p className="text-sm text-red-400" role="alert">
+        <p className="text-sm text-neutral-700" role="alert">
           {error}
         </p>
       ) : null}
 
-      <footer className="mt-auto border-t border-[#222] pt-4 text-center text-xs text-zinc-500">
-        <Link href="/legal/privacy" className="hover:text-zinc-300">
+      <footer className="glass-bar mt-auto -mx-4 px-4 pt-4 text-center text-xs text-slate-500">
+        <Link href="/legal/privacy" className="hover:text-slate-800">
           Confidentialité
         </Link>
         <span className="mx-2">·</span>
-        <Link href="/legal/terms" className="hover:text-zinc-300">
+        <Link href="/legal/terms" className="hover:text-slate-800">
           CGU
         </Link>
       </footer>

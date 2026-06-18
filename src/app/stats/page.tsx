@@ -12,6 +12,7 @@ import type { HabitLogRow } from "@/types/today";
 import { StatsHeader } from "@/components/stats/StatsHeader";
 import { MonthCalendar } from "@/components/stats/MonthCalendar";
 import { HabitStatsTable } from "@/components/stats/HabitStatsTable";
+import { WeeklyGrid } from "@/components/stats/WeeklyGrid";
 import { PageHeader } from "@/components/nav/PageHeader";
 
 export const metadata: Metadata = {
@@ -35,7 +36,7 @@ export default async function StatsPage() {
   const toDay = todayUtcString();
   const fromDay = addDays(toDay, -29);
 
-  const [habitsRes, logsRes, profileRes] = await Promise.all([
+  const [habitsRes, logsRes] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, missed_days_count")
@@ -47,16 +48,10 @@ export default async function StatsPage() {
       .eq("user_id", user.id)
       .gte("logged_on", fromDay)
       .lte("logged_on", toDay),
-    supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", user.id)
-      .maybeSingle(),
   ]);
 
   const habits = (habitsRes.data ?? []) as HabitLite[];
   const logs = (logsRes.data ?? []) as HabitLogRow[];
-  const firstName = profileRes.data?.display_name?.trim() ?? null;
 
   const globalPct = globalCompletion30d(logs, habits, fromDay, toDay);
   const bestStreak = bestStreakAmongHabits(logs, habits, toDay);
@@ -72,11 +67,11 @@ export default async function StatsPage() {
   const calMonth = now.getUTCMonth() + 1;
 
   return (
-    <div className="min-h-full flex-1 bg-[#0a0a0f] text-white">
+    <div className="min-h-full flex-1">
       <PageHeader
         title="Statistiques"
         subtitle="30 derniers jours (UTC)"
-        firstName={firstName}
+        showAdd
       />
       <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 pb-28">
         <StatsHeader
@@ -90,29 +85,30 @@ export default async function StatsPage() {
           logs={logs}
           habits={habits}
         />
-        <div className="rounded-xl border border-[#333] bg-[#111] p-3 text-xs text-zinc-400">
-          <p className="mb-2 font-medium text-zinc-300">Légende du calendrier</p>
+        <WeeklyGrid habits={habits} logs={logs} endDay={toDay} />
+        <div className="glass rounded-xl p-3 text-xs text-slate-600 shadow-sm">
+          <p className="mb-2 font-medium text-slate-800">Légende du calendrier</p>
           <ul className="space-y-1">
             <li>
-              <span className="mr-2 inline-block h-2 w-2 rounded-sm bg-emerald-800" />{" "}
+              <span className="mr-2 inline-block h-2 w-2 rounded-sm bg-neutral-900" />{" "}
               Jour à 100 % des habitudes cochées
             </li>
             <li>
-              <span className="mr-2 inline-block h-2 w-2 rounded-sm bg-emerald-600/70" />{" "}
+              <span className="mr-2 inline-block h-2 w-2 rounded-sm bg-neutral-500" />{" "}
               Entre 50 % et 99 %
             </li>
             <li>
-              <span className="mr-2 inline-block h-2 w-2 rounded-sm bg-emerald-900/40" />{" "}
+              <span className="mr-2 inline-block h-2 w-2 rounded-sm bg-neutral-200" />{" "}
               Partiel (moins de la moitié)
             </li>
             <li>
-              <span className="mr-2 inline-block h-2 w-2 rounded-sm bg-zinc-800" />{" "}
+              <span className="mr-2 inline-block h-2 w-2 rounded-sm bg-slate-100" />{" "}
               Aucune habitude complétée ce jour-là
             </li>
           </ul>
         </div>
         {habits.length > 0 && globalPct < 30 ? (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100/95">
+          <p className="glass-subtle rounded-lg px-3 py-2 text-sm text-neutral-900">
             Chaque série commence par un jour où tu te montres présent. Ce
             mois-ci est encore léger : vise une petite habitude chaque jour, la
             courbe suivra.

@@ -8,9 +8,17 @@ type CheckinButtonProps = {
   period: IdentityPeriod;
   mantra: string;
   disabled: boolean;
+  currentCount: number;
+  targetReps: number;
 };
 
-export function CheckinButton({ period, mantra, disabled }: CheckinButtonProps) {
+export function CheckinButton({
+  period,
+  mantra,
+  disabled,
+  currentCount,
+  targetReps,
+}: CheckinButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +41,7 @@ export function CheckinButton({ period, mantra, disabled }: CheckinButtonProps) 
         details?: string;
         code?: string;
         supabase?: Record<string, unknown>;
+        count?: number;
       };
       if (!res.ok) {
         const parts: string[] = [];
@@ -57,16 +66,24 @@ export function CheckinButton({ period, mantra, disabled }: CheckinButtonProps) 
     }
   }
 
+  const remaining = Math.max(0, targetReps - currentCount);
+
   return (
     <div className="space-y-2">
       <button
         type="button"
         disabled={disabled || loading}
         onClick={() => void submit()}
-        className="rounded-lg bg-[#6366f1] px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
+        className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-sm hover:bg-neutral-200 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-neutral-500"
       >
-        {loading ? "…" : "Valider"}
+        {loading ? "…" : disabled ? "Terminé" : "J'ai lu"}
       </button>
+      {!disabled && remaining > 0 ? (
+        <p className="text-xs text-neutral-500">
+          Encore {remaining} lecture{remaining > 1 ? "s" : ""} pour cette
+          période.
+        </p>
+      ) : null}
       {error ? (
         <p className="text-xs text-red-400" role="alert">
           {error}

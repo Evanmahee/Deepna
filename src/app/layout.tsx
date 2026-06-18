@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#6366f1",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -41,10 +41,7 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body
-        className="min-h-full flex flex-col bg-[#0a0a0f] text-white"
-        style={{ backgroundColor: "#0a0a0f", color: "#ffffff" }}
-      >
+      <body className="flex min-h-full flex-col bg-black text-white">
         <PushRegister />
         <AppChrome>{children}</AppChrome>
       </body>

@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { HabitRowData } from "@/types/today";
-import { CreateHabitTypePicker } from "@/components/today/CreateHabitTypePicker";
 
-const inputClass =
-  "w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-sm text-white";
+import { glassInputClass } from "@/lib/glass";
+
+const inputClass = glassInputClass;
+const textareaClass = `${inputClass} min-h-[5.5rem] resize-y`;
 
 type EditHabitModalProps = {
   habit: HabitRowData | null;
@@ -17,7 +18,7 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [emoji, setEmoji] = useState("⭐");
-  const [type, setType] = useState<"good" | "bad" | "neutral">("good");
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -25,7 +26,7 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
     if (habit) {
       setTitle(habit.name);
       setEmoji(habit.icon_emoji || "⭐");
-      setType(habit.habit_type);
+      setDescription(habit.description ?? "");
       setErr(null);
     }
   }, [habit]);
@@ -44,7 +45,7 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
         body: JSON.stringify({
           name: title.trim(),
           icon_emoji: emoji.trim() || "⭐",
-          habit_type: type,
+          description: description.trim() || null,
         }),
       });
       const j = (await res.json()) as { error?: string };
@@ -61,21 +62,23 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60">
+    <div className="glass-overlay fixed inset-0 z-50 flex flex-col justify-end">
       <button
         type="button"
         className="flex-1 cursor-default"
         aria-label="Fermer"
         onClick={onClose}
       />
-      <div className="max-h-[85vh] overflow-y-auto rounded-t-2xl border border-[#333] bg-[#0a0a0f] px-4 pb-8 pt-4">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-zinc-600" />
-        <h3 className="mb-4 text-lg font-semibold text-white">
+      <div className="glass-sheet max-h-[85vh] overflow-y-auto rounded-t-2xl px-4 pb-8 pt-4">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-300" />
+        <h3 className="mb-4 text-lg font-semibold text-slate-900">
           Modifier l&apos;habitude
         </h3>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-zinc-400">Titre</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Titre
+            </label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -83,20 +86,37 @@ export function EditHabitModal({ habit, onClose }: EditHabitModalProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-zinc-400">Emoji</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Emoji
+            </label>
             <input
               value={emoji}
               onChange={(e) => setEmoji(e.target.value)}
               className={inputClass}
             />
           </div>
-          <CreateHabitTypePicker value={type} onChange={setType} />
-          {err ? <p className="text-sm text-red-400">{err}</p> : null}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Description{" "}
+              <span className="font-normal text-slate-400">(optionnel)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={textareaClass}
+              placeholder="Pourquoi cette habitude ? Une anecdote, une raison d'arrêter…"
+              rows={3}
+            />
+            <p className="mt-1 text-[11px] text-slate-400">
+              Visible uniquement via « Inspecter » sur l&apos;habitude.
+            </p>
+          </div>
+          {err ? <p className="text-sm text-neutral-700">{err}</p> : null}
           <button
             type="button"
             disabled={loading || !title.trim()}
             onClick={() => void submit()}
-            className="w-full rounded-lg bg-[#6366f1] py-3 text-sm font-semibold text-white disabled:opacity-50"
+            className="w-full rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white shadow-md shadow-neutral-900/10 hover:bg-neutral-800 disabled:opacity-50"
           >
             {loading ? "Enregistrement…" : "Enregistrer"}
           </button>

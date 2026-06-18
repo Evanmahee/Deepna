@@ -3,17 +3,25 @@
 import { useState } from "react";
 import { MantraDisplay } from "@/components/identity/MantraDisplay";
 import { IdentitySection } from "@/components/identity/IdentitySection";
+import {
+  IDENTITY_REPS,
+  activeIdentityPeriod,
+  parseRepCount,
+  totalRepsToday,
+} from "@/lib/identity-reps";
 import type { IdentityCheckinRow, IdentityPeriod } from "@/types/identity";
 
-const PERIODS: { period: IdentityPeriod; title: string; reps: number }[] = [
-  { period: "morning", title: "Matin", reps: 3 },
-  { period: "afternoon", title: "Après-midi", reps: 6 },
-  { period: "evening", title: "Soir", reps: 9 },
+const PERIODS: { period: IdentityPeriod; title: string }[] = [
+  { period: "morning", title: "Matin" },
+  { period: "afternoon", title: "Après-midi" },
+  { period: "evening", title: "Soir" },
 ];
 
 type Props = {
   initialStatement: string | null;
   checkins: IdentityCheckinRow[];
+  /** Intégré dans une page plus large (ex. profil) — sans marge basse nav */
+  embedded?: boolean;
 };
 
 function byPeriod(rows: IdentityCheckinRow[]) {
@@ -24,20 +32,57 @@ function byPeriod(rows: IdentityCheckinRow[]) {
   return m;
 }
 
-export function IdentityClient({ initialStatement, checkins }: Props) {
+const PERIOD_LABEL: Record<IdentityPeriod, string> = {
+  morning: "ce matin",
+  afternoon: "cet apm",
+  evening: "ce soir",
+};
+
+export function IdentityClient({
+  initialStatement,
+  checkins,
+  embedded = false,
+}: Props) {
   const [mantra, setMantra] = useState(initialStatement ?? "");
   const map = byPeriod(checkins);
+  const active = activeIdentityPeriod();
+
+  const counts: Partial<Record<IdentityPeriod, number>> = {};
+  for (const { period } of PERIODS) {
+    counts[period] = parseRepCount(map[period]?.reflection);
+  }
+  const dayTotal = totalRepsToday(counts);
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-6 pb-28">
+    <div
+      className={[
+        "mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-6",
+        embedded ? "" : "pb-28",
+      ].join(" ")}
+    >
       <MantraDisplay value={mantra} onChange={setMantra} />
-      {PERIODS.map(({ period, title, reps }) => (
+
+      <div className="glass rounded-xl px-4 py-3 text-sm text-neutral-300">
+        <p>
+          Aujourd&apos;hui :{" "}
+          <span className="font-mono font-semibold text-white">{dayTotal}</span>{" "}
+          / 18 répétitions
+        </p>
+        <p className="mt-1 text-xs text-neutral-500">
+          Période active ({PERIOD_LABEL[active]}) :{" "}
+          <span className="font-mono text-neutral-300">
+            {counts[active] ?? 0}/{IDENTITY_REPS[active]}
+          </span>
+        </p>
+      </div>
+
+      {PERIODS.map(({ period, title }) => (
         <IdentitySection
           key={period}
           period={period}
           title={title}
-          reps={reps}
-          done={Boolean(map[period]?.checked_at)}
+          reps={IDENTITY_REPS[period]}
+          checkin={map[period]}
           mantra={mantra}
         />
       ))}

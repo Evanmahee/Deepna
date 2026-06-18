@@ -42,18 +42,18 @@ export function TimeBlockSection({
   return (
     <details
       open={defaultOpen}
-      className="group mb-3 overflow-hidden rounded-xl border border-[#222] bg-[#111]/40"
+      className="group mb-3 overflow-hidden rounded-2xl glass shadow-sm shadow-slate-900/5"
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
+      <summary className="glass-subtle flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
         <div>
           <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-xs text-zinc-500">{subtitle}</p>
+          <p className="text-xs text-neutral-500">{subtitle}</p>
         </div>
-        <span className="text-zinc-500 transition-transform group-open:rotate-180">
+        <span className="text-neutral-500 transition-transform group-open:rotate-180">
           ▼
         </span>
       </summary>
-      <div className="space-y-2 border-t border-[#222] px-3 py-3">
+      <div className="glass-subtle space-y-2 border-t border-white/10 px-3 py-3">
         {habits.map((h) => (
           <HabitRow
             key={h.id}

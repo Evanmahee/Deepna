@@ -7,10 +7,14 @@ type Props = {
   setNewStart: (v: string) => void;
   newEnd: string;
   setNewEnd: (v: string) => void;
+  variant?: "light" | "dark";
 };
 
-const field =
-  "rounded border border-[#333] bg-[#0a0a0f] px-2 py-1.5 text-sm text-white";
+import { glassInputClass, glassInputDarkClass } from "@/lib/glass";
+
+const lightField = `${glassInputClass} px-2 py-1.5`;
+
+const darkField = `${glassInputDarkClass} px-2 py-1.5`;
 
 export function CreateHabitNewSlotFields({
   newLabel,
@@ -19,14 +23,21 @@ export function CreateHabitNewSlotFields({
   setNewStart,
   newEnd,
   setNewEnd,
+  variant = "light",
 }: Props) {
+  const isDark = variant === "dark";
+  const field = isDark ? darkField : lightField;
+  const wrapClass = isDark
+    ? "glass-dark-subtle space-y-2 rounded-xl p-3"
+    : "glass-subtle space-y-2 rounded-xl p-3";
+
   return (
-    <div className="space-y-2 rounded-lg border border-[#333] bg-[#111] p-3">
+    <div className={wrapClass}>
       <input
         value={newLabel}
         onChange={(e) => setNewLabel(e.target.value)}
         className={`w-full ${field}`}
-        placeholder="Nom du créneau"
+        placeholder="Nom du groupe"
       />
       <div className="flex gap-2">
         <input

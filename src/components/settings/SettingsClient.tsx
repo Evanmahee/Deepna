@@ -12,6 +12,10 @@ type ProfileData = {
   has_stripe_customer: boolean;
 };
 
+import { glassInputClass, glassSectionClass } from "@/lib/glass";
+
+const inputClass = glassInputClass;
+
 export function SettingsClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -129,39 +133,39 @@ export function SettingsClient() {
   }
 
   if (loading) {
-    return <p className="text-sm text-zinc-500">Chargement…</p>;
+    return <p className="text-sm text-slate-500">Chargement…</p>;
   }
 
   const isPro = profile?.subscription_status === "active";
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-[#333] bg-[#111] p-4">
-        <h2 className="text-sm font-semibold text-white">Profil</h2>
-        <p className="mt-1 text-xs text-zinc-500">{profile?.email}</p>
+      <section className={glassSectionClass}>
+        <h2 className="text-sm font-semibold text-slate-900">Profil</h2>
+        <p className="mt-1 text-xs text-slate-500">{profile?.email}</p>
         <label className="mt-4 block space-y-1">
-          <span className="text-xs text-zinc-400">Prénom</span>
+          <span className="text-xs font-medium text-slate-600">Prénom</span>
           <input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full rounded-lg border border-[#333] bg-[#0a0a0f] px-3 py-2 text-sm text-white"
+            className={inputClass}
           />
         </label>
         <button
           type="button"
           disabled={saving || !displayName.trim()}
           onClick={() => void saveName()}
-          className="mt-3 rounded-lg bg-[#6366f1] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="mt-3 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-neutral-800 disabled:opacity-50"
         >
           {saving ? "…" : "Enregistrer"}
         </button>
       </section>
 
-      <section className="rounded-xl border border-[#333] bg-[#111] p-4">
-        <h2 className="text-sm font-semibold text-white">Abonnement Deepna Pro</h2>
-        <p className="mt-1 text-xs text-zinc-500">
+      <section className={glassSectionClass}>
+        <h2 className="text-sm font-semibold text-slate-900">Abonnement Deepna Pro</h2>
+        <p className="mt-1 text-xs text-slate-500">
           Statut :{" "}
-          <span className={isPro ? "text-emerald-400" : "text-zinc-400"}>
+          <span className={isPro ? "font-medium text-neutral-900" : "text-slate-500"}>
             {isPro ? "Actif" : "Gratuit"}
           </span>
         </p>
@@ -170,7 +174,7 @@ export function SettingsClient() {
             type="button"
             disabled={billingLoading}
             onClick={() => void portal()}
-            className="mt-3 rounded-lg border border-[#6366f1]/50 px-4 py-2 text-sm text-[#a5b4fc] disabled:opacity-50"
+            className="glass-pill mt-3 rounded-xl px-4 py-2 text-sm text-neutral-900 disabled:opacity-50"
           >
             Gérer l&apos;abonnement
           </button>
@@ -179,56 +183,56 @@ export function SettingsClient() {
             type="button"
             disabled={billingLoading}
             onClick={() => void checkout()}
-            className="mt-3 rounded-lg bg-[#6366f1] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="mt-3 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-neutral-800 disabled:opacity-50"
           >
             {billingLoading ? "…" : "Passer à Pro"}
           </button>
         )}
       </section>
 
-      <section className="rounded-xl border border-[#333] bg-[#111] p-4">
+      <section className={glassSectionClass}>
         <button
           type="button"
           onClick={() => void logout()}
-          className="text-sm text-zinc-300 hover:text-white"
+          className="text-sm text-slate-600 hover:text-slate-900"
         >
           Se déconnecter
         </button>
       </section>
 
-      <section className="rounded-xl border border-red-900/50 bg-red-950/20 p-4">
-        <h2 className="text-sm font-semibold text-red-300">Zone de danger</h2>
-        <p className="mt-1 text-xs text-zinc-500">
+      <section className="glass-subtle rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">Zone de danger</h2>
+        <p className="mt-1 text-xs text-slate-600">
           Supprime définitivement ton compte et toutes tes données.
         </p>
         <input
           value={deleteConfirm}
           onChange={(e) => setDeleteConfirm(e.target.value)}
           placeholder='Tape "SUPPRIMER"'
-          className="mt-3 w-full rounded-lg border border-[#333] bg-[#0a0a0f] px-3 py-2 text-sm text-white"
+          className={`mt-3 ${inputClass}`}
         />
         <button
           type="button"
           disabled={deleting}
           onClick={() => void deleteAccount()}
-          className="mt-3 rounded-lg border border-red-600 px-4 py-2 text-sm text-red-400 disabled:opacity-50"
+          className="mt-3 rounded-xl border border-neutral-400 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-200 disabled:opacity-50"
         >
           {deleting ? "…" : "Supprimer mon compte"}
         </button>
       </section>
 
-      <p className="text-center text-xs text-zinc-600">
-        <Link href="/legal/privacy" className="hover:text-zinc-400">
+      <p className="text-center text-xs text-slate-500">
+        <Link href="/legal/privacy" className="hover:text-slate-800">
           Confidentialité
         </Link>
         {" · "}
-        <Link href="/legal/terms" className="hover:text-zinc-400">
+        <Link href="/legal/terms" className="hover:text-slate-800">
           CGU
         </Link>
       </p>
 
-      {msg ? <p className="text-sm text-emerald-400">{msg}</p> : null}
-      {err ? <p className="text-sm text-red-400">{err}</p> : null}
+      {msg ? <p className="text-sm text-neutral-900">{msg}</p> : null}
+      {err ? <p className="text-sm text-neutral-700">{err}</p> : null}
     </div>
   );
 }

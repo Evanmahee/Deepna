@@ -7,8 +7,9 @@ import { LoginGoogleButton } from "@/components/login/LoginGoogleButton";
 
 type Mode = "signin" | "signup";
 
-const inputClass =
-  "w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500";
+import { glassInputClass } from "@/lib/glass";
+
+const inputClass = `${glassInputClass} py-2.5 outline-none`;
 
 export function LoginCredentialsForm() {
   const [mode, setMode] = useState<Mode>("signin");
@@ -63,7 +64,7 @@ export function LoginCredentialsForm() {
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm text-zinc-300">
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-600">
             Email
           </label>
           <input
@@ -81,7 +82,7 @@ export function LoginCredentialsForm() {
         <div>
           <label
             htmlFor="password"
-            className="mb-1 block text-sm text-zinc-300"
+            className="mb-1 block text-sm font-medium text-slate-600"
           >
             Mot de passe
           </label>
@@ -102,7 +103,7 @@ export function LoginCredentialsForm() {
         </div>
 
         {message ? (
-          <p className="text-sm text-zinc-400" role="status">
+          <p className="text-sm text-slate-600" role="status">
             {message}
           </p>
         ) : null}
@@ -110,7 +111,7 @@ export function LoginCredentialsForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-neutral-900/10 transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading
             ? "Chargement…"
@@ -122,10 +123,10 @@ export function LoginCredentialsForm() {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-[#333]" />
+          <span className="w-full border-t border-slate-200" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-[#0a0a0f] px-2 text-zinc-500">ou</span>
+          <span className="glass-strong px-2 text-slate-400">ou</span>
         </div>
       </div>
 

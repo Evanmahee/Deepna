@@ -116,6 +116,34 @@ export function bestStreakAmongHabits(
   return best;
 }
 
+/** Plus longue série de jours complétés dans [fromDay, toDay]. */
+export function bestStreakInRange(
+  logs: HabitLogRow[],
+  habitId: string,
+  fromDay: string,
+  toDay: string,
+): number {
+  const days: string[] = [];
+  let t = Date.parse(`${fromDay}T12:00:00Z`);
+  const end = Date.parse(`${toDay}T12:00:00Z`);
+  while (t <= end) {
+    days.push(new Date(t).toISOString().slice(0, 10));
+    t += 86400000;
+  }
+  let best = 0;
+  let run = 0;
+  for (const day of days) {
+    const row = logs.find((l) => l.habit_id === habitId && l.logged_on === day);
+    if (row?.completed) {
+      run += 1;
+      best = Math.max(best, run);
+    } else {
+      run = 0;
+    }
+  }
+  return best;
+}
+
 export function completedCountThisMonth(
   logs: HabitLogRow[],
   habits: HabitLite[],

@@ -38,9 +38,12 @@ create table if not exists public.habits (
   name text not null,
   icon_emoji text,
   habit_type text not null check (habit_type in ('good', 'bad', 'neutral')),
+  description text,
+  icon_color text,
   frequency text not null default 'daily',
   missed_days_count integer not null default 0,
-  archived boolean not null default false
+  archived boolean not null default false,
+  sort_order integer not null default 0
 );
 
 create table if not exists public.habit_logs (

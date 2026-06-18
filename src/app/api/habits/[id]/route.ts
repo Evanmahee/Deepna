@@ -2,10 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { isValidHabitColor } from "@/lib/habit-colors";
+
 type PatchBody = {
   name?: string;
   icon_emoji?: string | null;
+  icon_color?: string | null;
   habit_type?: "good" | "bad" | "neutral";
+  description?: string | null;
 };
 
 async function supabaseRoute() {
@@ -81,6 +85,17 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Type invalide" }, { status: 400 });
     }
     updates.habit_type = body.habit_type;
+  }
+  if (body.description !== undefined) {
+    updates.description = body.description?.trim() || null;
+  }
+  if (body.icon_color !== undefined) {
+    if (body.icon_color !== null && !isValidHabitColor(body.icon_color)) {
+      return NextResponse.json({ error: "Couleur invalide" }, { status: 400 });
+    }
+    updates.icon_color = body.icon_color
+      ? body.icon_color.toUpperCase()
+      : null;
   }
 
   if (Object.keys(updates).length === 0) {
