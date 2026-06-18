@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { CreateHabitModal } from "@/components/today/CreateHabitModal";
 import { CreateGoalModal } from "@/components/goals/CreateGoalModal";
-import type { TimeBlockRow } from "@/types/today";
 
 type HeaderActionsProps = {
   showSearch?: boolean;
@@ -26,19 +24,6 @@ export function HeaderActions({
 
   const [habitOpen, setHabitOpen] = useState(false);
   const [goalOpen, setGoalOpen] = useState(false);
-  const [timeBlocks, setTimeBlocks] = useState<TimeBlockRow[]>([]);
-
-  useEffect(() => {
-    if (!habitOpen) return;
-    const supabase = createClient();
-    void supabase
-      .from("time_blocks")
-      .select("*")
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => {
-        setTimeBlocks((data ?? []) as TimeBlockRow[]);
-      });
-  }, [habitOpen]);
 
   function onAdd() {
     if (isProfile) {
@@ -70,11 +55,7 @@ export function HeaderActions({
           </button>
         ) : null}
       </div>
-      <CreateHabitModal
-        open={habitOpen}
-        onClose={() => setHabitOpen(false)}
-        timeBlocks={timeBlocks}
-      />
+      <CreateHabitModal open={habitOpen} onClose={() => setHabitOpen(false)} />
       <CreateGoalModal open={goalOpen} onClose={() => setGoalOpen(false)} />
     </>
   );

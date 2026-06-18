@@ -1,5 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { HabitLogRow, HabitRowData, TimeBlockRow } from "@/types/today";
 import { HabitRow } from "@/components/today/HabitRow";
+import { GroupChevronButton } from "@/components/today/GroupChevronButton";
 
 type TimeBlockSectionProps = {
   block: TimeBlockRow | null;
@@ -28,6 +32,21 @@ export function TimeBlockSection({
   logDate,
   defaultOpen = false,
 }: TimeBlockSectionProps) {
+  const [completedOverrides, setCompletedOverrides] = useState<
+    Record<string, boolean>
+  >({});
+
+  useEffect(() => {
+    setCompletedOverrides({});
+  }, [logDate, logsByHabitId]);
+
+  const isHabitCompleted = (habitId: string) => {
+    if (habitId in completedOverrides) {
+      return completedOverrides[habitId];
+    }
+    return Boolean(logsByHabitId[habitId]?.completed);
+  };
+
   const title = block
     ? `${block.icon_emoji ? `${block.icon_emoji} ` : ""}${block.title}`
     : "Sans créneau";
@@ -39,27 +58,65 @@ export function TimeBlockSection({
     return null;
   }
 
+  const completedCount = habits.filter((h) => isHabitCompleted(h.id)).length;
+  const pct =
+    habits.length > 0
+      ? Math.min(100, (completedCount / habits.length) * 100)
+      : 0;
+  const hasProgress = completedCount > 0;
+
   return (
     <details
       open={defaultOpen}
-      className="group mb-3 overflow-hidden rounded-2xl glass shadow-sm shadow-slate-900/5"
+      className="group glass-sheet-dark glass-sheet-dark--card glass-group-card mb-3 overflow-hidden rounded-2xl"
     >
-      <summary className="glass-subtle flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
-        <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-xs text-neutral-500">{subtitle}</p>
+      <summary
+        className="relative flex cursor-pointer list-none items-center overflow-hidden border-b border-white/10 px-4 py-3 marker:content-none [&::-webkit-details-marker]:hidden"
+        role="progressbar"
+        aria-valuenow={completedCount}
+        aria-valuemin={0}
+        aria-valuemax={habits.length}
+        aria-label={`${title} — ${completedCount} sur ${habits.length} complétées`}
+      >
+        <div
+          aria-hidden
+          className="absolute inset-y-0 left-0 z-0 bg-white transition-[width] duration-500 ease-out group-open:opacity-0"
+          style={{ width: `${pct}%` }}
+        />
+        <div className="relative z-10 flex w-full min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2
+              className={`truncate text-base font-semibold ${
+                hasProgress
+                  ? "text-black group-open:text-white"
+                  : "text-white"
+              }`}
+            >
+              {title}
+            </h2>
+            <p
+              className={`truncate text-xs ${
+                hasProgress
+                  ? "text-black/55 group-open:text-neutral-500"
+                  : "text-neutral-500"
+              }`}
+            >
+              {subtitle}
+            </p>
+          </div>
+          <GroupChevronButton completed={completedCount} total={habits.length} />
         </div>
-        <span className="text-neutral-500 transition-transform group-open:rotate-180">
-          ▼
-        </span>
       </summary>
-      <div className="glass-subtle space-y-2 border-t border-white/10 px-3 py-3">
+      <div className="space-y-2 px-3 py-3">
         {habits.map((h) => (
           <HabitRow
             key={h.id}
             habit={h}
             logDate={logDate}
-            completedToday={Boolean(logsByHabitId[h.id]?.completed)}
+            completedToday={isHabitCompleted(h.id)}
+            onCompletedChange={(next) =>
+              setCompletedOverrides((prev) => ({ ...prev, [h.id]: next }))
+            }
           />
         ))}
       </div>

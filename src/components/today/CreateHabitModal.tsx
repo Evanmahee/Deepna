@@ -17,18 +17,14 @@ import { CreateHabitModalSheet } from "@/components/today/CreateHabitModalSheet"
 type CreateHabitModalProps = {
   open: boolean;
   onClose: () => void;
-  timeBlocks: TimeBlockRow[];
 };
 
 type ModalView = "templates" | "custom";
 
-export function CreateHabitModal({
-  open,
-  onClose,
-  timeBlocks,
-}: CreateHabitModalProps) {
+export function CreateHabitModal({ open, onClose }: CreateHabitModalProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [timeBlocks, setTimeBlocks] = useState<TimeBlockRow[]>([]);
   const [view, setView] = useState<ModalView>("templates");
   const [category, setCategory] = useState<TemplateCategory>("bonnes");
   const [query, setQuery] = useState("");
@@ -43,6 +39,32 @@ export function CreateHabitModal({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void fetch("/api/time-blocks")
+      .then(async (res) => {
+        const json = (await res.json()) as {
+          time_blocks?: TimeBlockRow[];
+          error?: string;
+        };
+        if (!res.ok) {
+          throw new Error(json.error ?? "Chargement des groupes impossible");
+        }
+        if (!cancelled) {
+          setTimeBlocks(json.time_blocks ?? []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTimeBlocks([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

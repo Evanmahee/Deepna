@@ -6,6 +6,7 @@ import { parseLoggedOnParam, todayUtcString } from "@/lib/dates";
 type Body = {
   habitId?: string;
   loggedOn?: string;
+  action?: "toggle" | "complete" | "fail" | "skip";
 };
 
 export async function POST(request: Request) {
@@ -62,7 +63,40 @@ export async function POST(request: Request) {
     .eq("logged_on", loggedOn)
     .maybeSingle();
 
-  const nextCompleted = existing ? !existing.completed : true;
+  const action = body.action ?? "toggle";
+
+  if (action === "skip") {
+    if (existing?.id) {
+      const wasCompleted = existing.completed;
+      const { error: deleteErr } = await supabase
+        .from("habit_logs")
+        .delete()
+        .eq("id", existing.id)
+        .eq("user_id", user.id);
+      if (deleteErr) {
+        return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+      }
+      const n = habit.missed_days_count ?? 0;
+      const newMissed = wasCompleted ? n + 1 : n;
+      if (newMissed !== n) {
+        await supabase
+          .from("habits")
+          .update({ missed_days_count: newMissed })
+          .eq("id", habitId)
+          .eq("user_id", user.id);
+      }
+    }
+    return NextResponse.json({ completed: false, skipped: true });
+  }
+
+  let nextCompleted: boolean;
+  if (action === "complete") {
+    nextCompleted = true;
+  } else if (action === "fail") {
+    nextCompleted = false;
+  } else {
+    nextCompleted = existing ? !existing.completed : true;
+  }
   const n = habit.missed_days_count ?? 0;
   const newMissed = nextCompleted ? Math.max(0, n - 1) : n + 1;
 

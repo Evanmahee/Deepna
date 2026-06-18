@@ -1,6 +1,7 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+
+import { toScheduledTimeOnly } from "@/lib/notification-time";
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler";
 
 type Body = {
   title?: string;
@@ -16,6 +17,28 @@ function utcDayString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+export async function GET() {
+  const supabase = await createRouteHandlerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  const { data, error } = await supabase
+    .from("time_blocks")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ time_blocks: data ?? [] });
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as Body;
   const title = body.title?.trim();
@@ -23,29 +46,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Titre requis" }, { status: 400 });
   }
 
+  const starts_at = toScheduledTimeOnly(body.starts_at) ?? "09:00:00";
+  const ends_at = toScheduledTimeOnly(body.ends_at) ?? "10:00:00";
   const block_date = body.block_date ?? utcDayString();
-  const starts_at =
-    body.starts_at ?? `${block_date}T09:00:00.000Z`;
-  const ends_at = body.ends_at ?? `${block_date}T10:00:00.000Z`;
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        },
-      },
-    },
-  );
-
+  const supabase = await createRouteHandlerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

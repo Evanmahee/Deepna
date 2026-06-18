@@ -1,93 +1,115 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { EditHabitModal } from "@/components/today/EditHabitModal";
+import { HabitActionSheet } from "@/components/today/HabitActionSheet";
 import { HabitInspectModal } from "@/components/today/HabitInspectModal";
-import { habitCardSurfaceStyle } from "@/components/today/HabitCardPreview";
+import { useLongPress } from "@/lib/use-long-press";
 import type { HabitRowData } from "@/types/today";
 
 type HabitRowProps = {
   habit: HabitRowData;
   logDate: string;
   completedToday: boolean;
+  onCompletedChange?: (completed: boolean) => void;
 };
+
+async function logAction(
+  habitId: string,
+  loggedOn: string,
+  action: "toggle" | "complete" | "fail" | "skip",
+) {
+  const res = await fetch("/api/habits/log", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ habitId, loggedOn, action }),
+  });
+  const json = (await res.json()) as {
+    completed?: boolean;
+    error?: string;
+  };
+  if (!res.ok) {
+    throw new Error(json.error ?? "Erreur");
+  }
+  return json;
+}
 
 export function HabitRow({
   habit,
   logDate,
   completedToday,
+  onCompletedChange,
 }: HabitRowProps) {
   const router = useRouter();
-  const menuRef = useRef<HTMLDivElement>(null);
   const [completed, setCompleted] = useState(completedToday);
-  const [missed, setMissed] = useState(habit.missed_days_count);
   const [pending, setPending] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [sweep, setSweep] = useState<"in" | "out" | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [inspecting, setInspecting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     setCompleted(completedToday);
-    setMissed(habit.missed_days_count);
-  }, [completedToday, habit.missed_days_count, habit.id, logDate]);
+  }, [completedToday, habit.id, logDate]);
 
   useEffect(() => {
-    if (!menuOpen) return;
-    function onDoc(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+    if (!sweep) {
+      return;
     }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [menuOpen]);
+    const t = window.setTimeout(() => setSweep(null), 520);
+    return () => window.clearTimeout(t);
+  }, [sweep]);
+
+  function triggerSweep(mode: "in" | "out") {
+    setSweep(null);
+    requestAnimationFrame(() => setSweep(mode));
+  }
+
+  const openSheet = useCallback(() => {
+    setSheetOpen(true);
+  }, []);
+
+  const { longPressProps, didLongPress, resetLongPress } = useLongPress({
+    onLongPress: openSheet,
+  });
 
   const toggle = useCallback(async () => {
     const prevC = completed;
-    const prevM = missed;
     const nextC = !prevC;
+    if (nextC && !prevC) {
+      triggerSweep("in");
+    } else if (!nextC && prevC) {
+      triggerSweep("out");
+    }
     setCompleted(nextC);
-    setMissed(nextC ? Math.max(0, prevM - 1) : prevM + 1);
+    onCompletedChange?.(nextC);
     setPending(true);
     try {
-      const res = await fetch("/api/habits/log", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ habitId: habit.id, loggedOn: logDate }),
-      });
-      const json = (await res.json()) as {
-        completed?: boolean;
-        missed_days_count?: number;
-        error?: string;
-      };
-      if (!res.ok) {
-        throw new Error(json.error ?? "Erreur");
-      }
+      const json = await logAction(habit.id, logDate, "toggle");
       if (typeof json.completed === "boolean") {
         setCompleted(json.completed);
+        onCompletedChange?.(json.completed);
       }
-      if (typeof json.missed_days_count === "number") {
-        setMissed(json.missed_days_count);
-      }
+      router.refresh();
     } catch {
       setCompleted(prevC);
-      setMissed(prevM);
+      onCompletedChange?.(prevC);
+      setSweep(null);
     } finally {
       setPending(false);
     }
-  }, [completed, habit.id, logDate, missed]);
+  }, [completed, habit.id, logDate, onCompletedChange, router]);
 
-  async function archive() {
-    setMenuOpen(false);
+  async function archiveHabit() {
     setDeleting(true);
     try {
       const res = await fetch(`/api/habits/${habit.id}`, { method: "DELETE" });
       const j = (await res.json()) as { error?: string };
       if (!res.ok) {
-        throw new Error(j.error ?? "Suppression impossible");
+        throw new Error(j.error ?? "Archivage impossible");
       }
       router.refresh();
     } catch {
@@ -97,101 +119,178 @@ export function HabitRow({
     }
   }
 
-  const showMissedBadge = missed > 0 && !completed;
-  const { style, isLight } = habitCardSurfaceStyle(habit.icon_color);
-  const mutedControl = isLight
-    ? "text-black/45 hover:bg-black/10 hover:text-black/80"
-    : "text-white/50 hover:bg-white/15 hover:text-white/90";
-  const checkIdle = isLight ? "border-black/25 hover:border-black/60" : "border-white/35 hover:border-white/70";
-  const checkDone = isLight
-    ? "border-black/80 bg-black/5"
-    : "border-white/80 bg-white/10";
+  async function duplicateHabit() {
+    const res = await fetch("/api/habits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: `${habit.name} (copie)`,
+        icon_emoji: habit.icon_emoji,
+        icon_color: habit.icon_color,
+        habit_type: habit.habit_type,
+        description: habit.description,
+        time_block_id: habit.time_block_id,
+      }),
+    });
+    const j = (await res.json()) as { error?: string };
+    if (!res.ok) {
+      throw new Error(j.error ?? "Duplication impossible");
+    }
+    router.refresh();
+  }
+
+  async function resetHistory() {
+    const res = await fetch(`/api/habits/${habit.id}/history`, {
+      method: "DELETE",
+    });
+    const j = (await res.json()) as { error?: string };
+    if (!res.ok) {
+      throw new Error(j.error ?? "Réinitialisation impossible");
+    }
+    setCompleted(false);
+    router.refresh();
+  }
+
+  async function setLogAction(action: "complete" | "fail" | "skip") {
+    if (action === "complete" && !completed) {
+      triggerSweep("in");
+    } else if ((action === "fail" || action === "skip") && completed) {
+      triggerSweep("out");
+    }
+    const json = await logAction(habit.id, logDate, action);
+    if (action === "skip") {
+      setCompleted(false);
+    } else if (typeof json.completed === "boolean") {
+      setCompleted(json.completed);
+    }
+    router.refresh();
+  }
 
   return (
     <>
       <div
-        className={`relative flex items-center gap-2 rounded-xl border px-2 py-2.5 shadow-sm transition-opacity duration-200 sm:gap-3 sm:px-3 ${
-          completed ? "opacity-75" : "opacity-100"
-        }`}
-        style={style}
+        {...longPressProps}
+        className={`relative flex select-none items-center gap-2 overflow-hidden rounded-xl border px-2 py-2.5 shadow-sm transition-colors duration-300 active:scale-[0.99] sm:gap-3 sm:px-3 ${
+          completed
+            ? "border-black/10 bg-white text-black"
+            : "glass-habit text-white"
+        } ${deleting ? "pointer-events-none opacity-40" : ""}`}
+        role="button"
+        tabIndex={0}
+        aria-label={`${habit.name}. Appui court pour cocher. Appui long pour les options.`}
+        onClick={() => {
+          if (didLongPress()) {
+            resetLongPress();
+            return;
+          }
+          if (pending || deleting) {
+            return;
+          }
+          void toggle();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (!pending && !deleting) {
+              void toggle();
+            }
+          }
+        }}
       >
-        <span className="shrink-0 text-lg sm:text-xl" aria-hidden>
+        {sweep ? (
+          <span
+            aria-hidden
+            className={`pointer-events-none absolute inset-0 z-[1] bg-white ${
+              sweep === "in" ? "habit-complete-sweep" : "habit-uncheck-sweep"
+            }`}
+          />
+        ) : null}
+        <span className="relative z-10 shrink-0 text-lg sm:text-xl" aria-hidden>
           {habit.icon_emoji || "•"}
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="relative z-10 min-w-0 flex-1">
           <p className="truncate text-sm font-semibold sm:text-base">{habit.name}</p>
-        </div>
-        {showMissedBadge ? (
-          <span
-            className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold sm:px-2 sm:text-xs ${
-              isLight
-                ? "bg-black/10 text-black/80 ring-1 ring-black/15"
-                : "bg-white/15 text-white ring-1 ring-white/20"
-            }`}
-          >
-            -{missed}
-          </span>
-        ) : null}
-        <div ref={menuRef} className="relative shrink-0">
-          <button
-            type="button"
-            disabled={deleting}
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Options habitude"
-            aria-expanded={menuOpen}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg transition disabled:opacity-50 ${mutedControl}`}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-          {menuOpen ? (
-            <div className="glass-strong absolute right-0 top-full z-20 mt-1 min-w-[9rem] overflow-hidden rounded-xl py-1 shadow-lg shadow-slate-900/10">
-              <button
-                type="button"
-                className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-white/40"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setInspecting(true);
-                }}
-              >
-                Inspecter
-              </button>
-              <button
-                type="button"
-                className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-white/40"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setEditing(true);
-                }}
-              >
-                Modifier
-              </button>
-              <button
-                type="button"
-                className="block w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-white/40"
-                onClick={() => void archive()}
-              >
-                Supprimer
-              </button>
-            </div>
-          ) : null}
         </div>
         <button
           type="button"
+          data-no-long-press
           disabled={pending}
-          onClick={() => void toggle()}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (didLongPress()) {
+              e.preventDefault();
+              resetLongPress();
+              return;
+            }
+            void toggle();
+          }}
           aria-pressed={completed}
           aria-label={completed ? "Marquer non fait" : "Marquer fait"}
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition disabled:opacity-50 sm:h-9 sm:w-9 ${
-            completed ? checkDone : checkIdle
+          className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 transition-[border-color] duration-300 disabled:opacity-50 sm:h-9 sm:w-9 ${
+            completed ? "border-black text-white" : "border-white/35 text-white"
           }`}
         >
-          {completed ? (
-            <span className="text-sm font-bold leading-none sm:text-base" aria-hidden>
-              ✓
-            </span>
-          ) : null}
+          {(completed || sweep === "in" || sweep === "out") && (
+            <svg
+              className="pointer-events-none absolute inset-0 h-full w-full -rotate-90"
+              viewBox="0 0 36 36"
+              aria-hidden
+            >
+              <circle
+                cx="18"
+                cy="18"
+                r="14"
+                fill="none"
+                stroke="#000000"
+                strokeWidth="28"
+                strokeDasharray="88"
+                strokeLinecap="butt"
+                className={
+                  sweep === "in"
+                    ? "habit-check-stroke-in"
+                    : sweep === "out"
+                      ? "habit-check-stroke-out"
+                      : ""
+                }
+                style={completed && !sweep ? { strokeDashoffset: 0 } : undefined}
+              />
+            </svg>
+          )}
+          <span className="relative z-10 flex items-center justify-center">
+            {completed ? (
+              <Check
+                className="h-4 w-4 sm:h-[18px] sm:w-[18px]"
+                strokeWidth={3}
+                aria-hidden
+              />
+            ) : (
+              <Plus
+                className="h-4 w-4 sm:h-[18px] sm:w-[18px]"
+                strokeWidth={2.5}
+                aria-hidden
+              />
+            )}
+          </span>
         </button>
       </div>
+
+      <HabitActionSheet
+        habit={sheetOpen ? habit : null}
+        logDate={logDate}
+        completed={completed}
+        onClose={() => setSheetOpen(false)}
+        onComplete={() => setLogAction("complete")}
+        onFail={() => setLogAction("fail")}
+        onSkip={() => setLogAction("skip")}
+        onEdit={() => setEditing(true)}
+        onAddNote={() => setEditing(true)}
+        onInspect={() => setInspecting(true)}
+        onDuplicate={() => duplicateHabit()}
+        onResetHistory={() => resetHistory()}
+        onArchive={() => archiveHabit()}
+        onDelete={() => archiveHabit()}
+      />
+
       <EditHabitModal
         habit={editing ? habit : null}
         onClose={() => setEditing(false)}

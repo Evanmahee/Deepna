@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Plus } from "lucide-react";
 import {
   habitColorForeground,
   normalizeHabitColor,
@@ -37,7 +38,11 @@ export function HabitCardPreview({
   className = "",
   completed = false,
 }: HabitCardPreviewProps) {
-  const { style, isLight } = habitCardSurfaceStyle(color);
+  const { style, isLight, fg } = habitCardSurfaceStyle(color);
+
+  const checkBorderIdle = isLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.55)";
+  const checkBorderDone = isLight ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.9)";
+  const checkBgDone = isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.18)";
 
   return (
     <div
@@ -49,20 +54,19 @@ export function HabitCardPreview({
       </span>
       <p className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</p>
       <span
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 ${
-          completed
-            ? isLight
-              ? "border-black/80 bg-black/5"
-              : "border-white/80 bg-white/10"
-            : isLight
-              ? "border-black/25"
-              : "border-white/35"
-        }`}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2"
+        style={{
+          color: fg,
+          borderColor: completed ? checkBorderDone : checkBorderIdle,
+          backgroundColor: completed ? checkBgDone : "transparent",
+        }}
         aria-hidden
       >
         {completed ? (
-          <span className="text-sm font-bold leading-none">✓</span>
-        ) : null}
+          <Check className="h-4 w-4" strokeWidth={3} />
+        ) : (
+          <Plus className="h-4 w-4" strokeWidth={2.5} />
+        )}
       </span>
     </div>
   );

@@ -96,8 +96,8 @@ export function CreateHabitModalSheet({
           body: JSON.stringify({
             title: newLabel.trim() || "Groupe",
             block_date,
-            starts_at: `${block_date}T${newStart}:00.000Z`,
-            ends_at: `${block_date}T${newEnd}:00.000Z`,
+            starts_at: newStart,
+            ends_at: newEnd,
           }),
         });
         const tbJson = (await tb.json()) as { id?: string; error?: string };
