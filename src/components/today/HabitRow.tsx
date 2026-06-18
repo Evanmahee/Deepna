@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, Timer } from "lucide-react";
 import { EditHabitModal } from "@/components/today/EditHabitModal";
 import { HabitContextMenu } from "@/components/today/HabitContextMenu";
+import { HabitTimerOverlay } from "@/components/today/HabitTimerOverlay";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useLongPress } from "@/lib/use-long-press";
 import type { HabitRowData } from "@/types/today";
@@ -15,6 +16,11 @@ type HabitRowProps = {
   completedToday: boolean;
   dimmed?: boolean;
   onCompletedChange?: (completed: boolean) => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  isDragOver?: boolean;
 };
 
 const SWIPE_THRESHOLD = 72;
@@ -45,6 +51,11 @@ export function HabitRow({
   completedToday,
   dimmed = false,
   onCompletedChange,
+  draggable = false,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  isDragOver = false,
 }: HabitRowProps) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -54,6 +65,7 @@ export function HabitRow({
   const [checkPop, setCheckPop] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [timerOpen, setTimerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const touchStartX = useRef(0);
 
@@ -173,11 +185,15 @@ export function HabitRow({
     <>
       <div
         {...longPressProps}
+        draggable={draggable}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         className={`relative flex select-none items-center gap-2 overflow-hidden border px-4 py-3 shadow-sm transition-all duration-300 active:scale-[0.99] sm:gap-3 ${
           completed ? "glass-habit-done text-white/50" : "glass-habit text-white"
-        } ${dimmed ? "opacity-55 saturate-[0.4]" : ""} ${busy ? "pointer-events-none opacity-40" : ""}`}
+        } ${dimmed ? "opacity-55 saturate-[0.4]" : ""} ${busy ? "pointer-events-none opacity-40" : ""} ${isDragOver ? "ring-2 ring-indigo-400" : ""}`}
         role="button"
         tabIndex={0}
         aria-label={`${habit.name}. Appui court pour cocher. Appui long ou glisser à gauche pour les options.`}
@@ -214,6 +230,20 @@ export function HabitRow({
         <div className="relative z-10 min-w-0 flex-1">
           <p className="truncate text-sm font-semibold sm:text-base">{habit.name}</p>
         </div>
+        {habit.duration_minutes != null ? (
+          <button
+            type="button"
+            data-no-long-press
+            onClick={(e) => {
+              e.stopPropagation();
+              setTimerOpen(true);
+            }}
+            className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/15"
+            aria-label="Lancer le timer"
+          >
+            <Timer className="h-4 w-4" strokeWidth={2} />
+          </button>
+        ) : null}
         <button
           type="button"
           data-no-long-press
@@ -291,6 +321,17 @@ export function HabitRow({
         habit={editing ? habit : null}
         onClose={() => setEditing(false)}
       />
+
+      {timerOpen ? (
+        <HabitTimerOverlay
+          habitName={habit.name}
+          defaultMinutes={habit.duration_minutes}
+          onClose={() => setTimerOpen(false)}
+          onComplete={() => {
+            if (!completed && !pending) void toggle();
+          }}
+        />
+      ) : null}
     </>
   );
 }

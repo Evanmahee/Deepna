@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, FolderOpen, Palette, Smile } from "lucide-react";
+import { Bell, Clock, FolderOpen, Palette, Smile } from "lucide-react";
 import type { TimeBlockRow } from "@/types/today";
 import { NEW_TIME_BLOCK } from "@/components/today/habit-form-constants";
 import { ensurePushSubscription } from "@/lib/push-client";
@@ -24,6 +24,10 @@ import { HabitGroupPicker } from "@/components/today/HabitGroupPicker";
 import { HabitNotificationPicker } from "@/components/today/HabitNotificationPicker";
 import { HabitDescriptionPicker } from "@/components/today/HabitDescriptionPicker";
 import { useToast } from "@/components/ui/ToastProvider";
+import {
+  ALL_NOTIFICATION_DAYS,
+  type NotificationDayId,
+} from "@/lib/notification-days";
 
 export { NEW_TIME_BLOCK };
 
@@ -65,6 +69,11 @@ export function CreateHabitModalSheet({
   const [newEnd, setNewEnd] = useState("10:00");
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [notifyTime, setNotifyTime] = useState("09:00");
+  const [notifyDays, setNotifyDays] = useState<NotificationDayId[]>([
+    ...ALL_NOTIFICATION_DAYS,
+  ]);
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -130,8 +139,17 @@ export function CreateHabitModalSheet({
           habit_type: initialType,
           description: description.trim() || null,
           time_block_id: resolved,
+          duration_minutes:
+            durationMinutes === "" ? null : Number(durationMinutes),
           notification: notifyEnabled
-            ? { enabled: true, scheduled_time: notifyTime }
+            ? {
+                enabled: true,
+                scheduled_time: notifyTime,
+                days: notifyDays,
+                message:
+                  notifyMessage.trim() ||
+                  `${emoji.trim() || "⭐"} ${title.trim()}`,
+              }
             : undefined,
         }),
       });
@@ -222,6 +240,11 @@ export function CreateHabitModalSheet({
         onEnabledChange={setNotifyEnabled}
         time={notifyTime}
         onTimeChange={setNotifyTime}
+        days={notifyDays}
+        onDaysChange={setNotifyDays}
+        message={notifyMessage || `${emoji} ${title}`.trim()}
+        onMessageChange={setNotifyMessage}
+        habitName={title}
         onBack={() => setPanel("main")}
       />
     );
@@ -281,6 +304,21 @@ export function CreateHabitModalSheet({
             value={groupLabel}
             valueMuted={!blockId}
             onClick={() => setPanel("group")}
+          />
+          <FormRow
+            icon={<Clock className="h-4 w-4" strokeWidth={2} />}
+            label="Durée (timer)"
+            value={
+              durationMinutes === ""
+                ? "Aucune"
+                : `${durationMinutes} min`
+            }
+            valueMuted={durationMinutes === ""}
+            onClick={() => {
+              const next =
+                durationMinutes === "" ? 25 : durationMinutes === 25 ? 10 : "";
+              setDurationMinutes(next);
+            }}
           />
         </FormSection>
 

@@ -7,13 +7,13 @@ import {
 } from "@/lib/notification-days";
 import { serializeSupabaseError } from "@/lib/supabase-errors";
 
-const ALL_DAYS = ALL_NOTIFICATION_DAYS;
-const DEFAULT_TIME = "09:00:00";
+type RouteContext = { params: Promise<{ habitId: string }> };
 
 type Body = {
   enabled?: boolean;
   scheduled_time?: string;
   days?: string[];
+  message?: string;
 };
 
 function timeToInput(value: string | null | undefined): string {
@@ -22,7 +22,8 @@ function timeToInput(value: string | null | undefined): string {
   return m ? `${m[1]}:${m[2]}` : "09:00";
 }
 
-export async function GET() {
+export async function GET(_request: Request, context: RouteContext) {
+  const { habitId } = await context.params;
   const supabase = await createRouteHandlerClient();
   const {
     data: { user },
@@ -31,28 +32,23 @@ export async function GET() {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
-  const [{ data: row }, { count: pushCount }] = await Promise.all([
-    supabase
-      .from("notification_settings")
-      .select("id, enabled, scheduled_time, days")
-      .eq("user_id", user.id)
-      .is("habit_id", null)
-      .maybeSingle(),
-    supabase
-      .from("push_subscriptions")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id),
-  ]);
+  const { data: row } = await supabase
+    .from("notification_settings")
+    .select("enabled, scheduled_time, days, message, label")
+    .eq("user_id", user.id)
+    .eq("habit_id", habitId)
+    .maybeSingle();
 
   return NextResponse.json({
     enabled: row?.enabled ?? false,
     scheduled_time: timeToInput(row?.scheduled_time as string | undefined),
     days: normalizeNotificationDays(row?.days as string[] | undefined),
-    has_push_subscription: (pushCount ?? 0) > 0,
+    message: row?.message ?? "",
   });
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: Request, context: RouteContext) {
+  const { habitId } = await context.params;
   const body = (await request.json()) as Body;
   const supabase = await createRouteHandlerClient();
   const {
@@ -62,28 +58,44 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
+  const { data: habit } = await supabase
+    .from("habits")
+    .select("id, name, icon_emoji")
+    .eq("id", habitId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!habit) {
+    return NextResponse.json({ error: "Habitude introuvable" }, { status: 404 });
+  }
+
   const { data: existing } = await supabase
     .from("notification_settings")
-    .select("id, enabled, scheduled_time, days")
+    .select("id, enabled, scheduled_time, days, message")
     .eq("user_id", user.id)
-    .is("habit_id", null)
+    .eq("habit_id", habitId)
     .maybeSingle();
 
   const scheduled_time =
     body.scheduled_time !== undefined
-      ? (toScheduledTimeOnly(body.scheduled_time) ?? DEFAULT_TIME)
-      : ((existing?.scheduled_time as string | undefined) ?? DEFAULT_TIME);
+      ? (toScheduledTimeOnly(body.scheduled_time) ?? "09:00:00")
+      : ((existing?.scheduled_time as string | undefined) ?? "09:00:00");
 
   const enabled = body.enabled ?? existing?.enabled ?? false;
   const days =
     body.days !== undefined
       ? normalizeNotificationDays(body.days)
       : normalizeNotificationDays(existing?.days as string[] | undefined);
+  const emoji = (habit.icon_emoji as string | null)?.trim() || "⭐";
+  const message =
+    body.message !== undefined
+      ? body.message.trim() || `${emoji} ${habit.name}`
+      : ((existing?.message as string | undefined) ?? `${emoji} ${habit.name}`);
 
   if (existing?.id) {
     const { error } = await supabase
       .from("notification_settings")
-      .update({ enabled, scheduled_time, days })
+      .update({ enabled, scheduled_time, days, message, label: habit.name })
       .eq("id", existing.id)
       .eq("user_id", user.id);
     if (error) {
@@ -92,15 +104,15 @@ export async function PATCH(request: Request) {
         { status: 500 },
       );
     }
-  } else {
+  } else if (enabled) {
     const { error } = await supabase.from("notification_settings").insert({
       user_id: user.id,
-      habit_id: null,
-      label: "Rappel quotidien",
-      message: "🔔 N'oublie pas tes habitudes Deepna",
+      habit_id: habitId,
+      label: habit.name,
+      message,
       scheduled_time,
-      days: [...ALL_DAYS],
-      enabled,
+      days: days.length ? days : [...ALL_NOTIFICATION_DAYS],
+      enabled: true,
     });
     if (error) {
       return NextResponse.json(
@@ -115,5 +127,6 @@ export async function PATCH(request: Request) {
     enabled,
     scheduled_time: timeToInput(scheduled_time),
     days,
+    message,
   });
 }

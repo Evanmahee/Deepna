@@ -2,33 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { todayUtcString } from "@/lib/dates";
-import {
-  bestStreakAllTimeAmongHabits,
-  globalCompletion30d,
-  type HabitLite,
-} from "@/lib/habit-stats";
+import type { HabitLite } from "@/lib/habit-stats";
 import type { HabitLogRow } from "@/types/today";
-import { StatsHeader } from "@/components/stats/StatsHeader";
-import { MonthCalendar } from "@/components/stats/MonthCalendar";
-import { HabitStatsTable } from "@/components/stats/HabitStatsTable";
-import { WeeklyGrid } from "@/components/stats/WeeklyGrid";
+import { StatsPageClient } from "@/components/stats/StatsPageClient";
 import { PageHeader } from "@/components/nav/PageHeader";
 
 export const metadata: Metadata = {
   title: "Stats — Deepna",
 };
-
-function addDays(isoDay: string, delta: number): string {
-  const t = Date.parse(`${isoDay}T12:00:00Z`) + delta * 86400000;
-  return new Date(t).toISOString().slice(0, 10);
-}
-
-function monthBounds(year: number, month: number) {
-  const start = `${year}-${String(month).padStart(2, "0")}-01`;
-  const last = new Date(Date.UTC(year, month, 0));
-  const end = last.toISOString().slice(0, 10);
-  return { start, end };
-}
 
 export default async function StatsPage() {
   const supabase = await createClient();
@@ -39,81 +20,33 @@ export default async function StatsPage() {
     redirect("/login");
   }
 
-  const toDay = todayUtcString();
-  const fromDay = addDays(toDay, -29);
-  const weekFromDay = addDays(toDay, -6);
+  const today = todayUtcString();
   const now = new Date();
   const calYear = now.getUTCFullYear();
   const calMonth = now.getUTCMonth() + 1;
-  const { start: monthStart, end: monthEnd } = monthBounds(calYear, calMonth);
 
-  const [habitsRes, logs30Res, logsAllRes, logsMonthRes, logsWeekRes] =
-    await Promise.all([
+  const [habitsRes, logsRes] = await Promise.all([
     supabase
       .from("habits")
       .select("id, name, missed_days_count, icon_emoji, icon_color")
       .eq("user_id", user.id)
       .eq("archived", false),
-    supabase
-      .from("habit_logs")
-      .select("*")
-      .eq("user_id", user.id)
-      .gte("logged_on", fromDay)
-      .lte("logged_on", toDay),
-    supabase
-      .from("habit_logs")
-      .select("*")
-      .eq("user_id", user.id),
-    supabase
-      .from("habit_logs")
-      .select("*")
-      .eq("user_id", user.id)
-      .gte("logged_on", monthStart)
-      .lte("logged_on", monthEnd),
-    supabase
-      .from("habit_logs")
-      .select("*")
-      .eq("user_id", user.id)
-      .gte("logged_on", weekFromDay)
-      .lte("logged_on", toDay),
+    supabase.from("habit_logs").select("*").eq("user_id", user.id),
   ]);
 
   const habits = (habitsRes.data ?? []) as HabitLite[];
-  const logs30 = (logs30Res.data ?? []) as HabitLogRow[];
-  const logsAll = (logsAllRes.data ?? []) as HabitLogRow[];
-  const logsMonth = (logsMonthRes.data ?? []) as HabitLogRow[];
-  const logsWeek = (logsWeekRes.data ?? []) as HabitLogRow[];
-
-  const globalPct = globalCompletion30d(logs30, habits, fromDay, toDay);
-  const bestStreakAllTime = bestStreakAllTimeAmongHabits(logsAll, habits);
+  const allLogs = (logsRes.data ?? []) as HabitLogRow[];
 
   return (
     <div className="min-h-full flex-1">
-      <PageHeader
-        title="Statistiques"
-        subtitle="30 derniers jours (UTC)"
-        showAdd
+      <PageHeader title="Statistiques" showAdd />
+      <StatsPageClient
+        habits={habits}
+        allLogs={allLogs}
+        today={today}
+        calYear={calYear}
+        calMonth={calMonth}
       />
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 pb-28">
-        <StatsHeader
-          globalPct={globalPct}
-          bestStreakAllTime={bestStreakAllTime}
-          activeHabits={habits.length}
-        />
-        <MonthCalendar
-          year={calYear}
-          month={calMonth}
-          logs={logsMonth}
-          habits={habits}
-        />
-        <WeeklyGrid habits={habits} logs={logsWeek} endDay={toDay} />
-        <HabitStatsTable
-          habits={habits}
-          logs={logs30}
-          fromDay={fromDay}
-          toDay={toDay}
-        />
-      </div>
     </div>
   );
 }

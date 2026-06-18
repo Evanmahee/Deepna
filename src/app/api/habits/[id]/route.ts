@@ -11,6 +11,8 @@ type PatchBody = {
   habit_type?: "good" | "bad" | "neutral";
   description?: string | null;
   archived?: boolean;
+  time_block_id?: string | null;
+  duration_minutes?: number | null;
 };
 
 async function supabaseRoute() {
@@ -100,6 +102,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
   if (body.archived !== undefined) {
     updates.archived = body.archived;
+  }
+  if (body.time_block_id !== undefined) {
+    updates.time_block_id = body.time_block_id;
+  }
+  if (body.duration_minutes !== undefined) {
+    updates.duration_minutes = body.duration_minutes;
   }
 
   if (Object.keys(updates).length === 0) {

@@ -1,17 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ensurePushSubscription } from "@/lib/push-client";
 import { glassInputClass, glassSectionClass } from "@/lib/glass";
-
-type AuthProvider = "email" | "google" | "unknown";
+import {
+  ALL_NOTIFICATION_DAYS,
+  NOTIFICATION_DAYS,
+  type NotificationDayId,
+} from "@/lib/notification-days";
 
 type ProfileData = {
   email: string | null;
   display_name: string | null;
+  avatar_url: string | null;
   subscription_status: string;
   has_stripe_customer: boolean;
 };
@@ -19,6 +24,7 @@ type ProfileData = {
 type NotifData = {
   enabled: boolean;
   scheduled_time: string;
+  days: NotificationDayId[];
   has_push_subscription: boolean;
 };
 
@@ -54,21 +60,26 @@ function IosSwitch({
 export function SettingsClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState("09:00");
+  const [notifDays, setNotifDays] = useState<NotificationDayId[]>([
+    ...ALL_NOTIFICATION_DAYS,
+  ]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [authProvider, setAuthProvider] = useState<AuthProvider>("unknown");
-  const [linkingGoogle, setLinkingGoogle] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -82,9 +93,11 @@ export function SettingsClient() {
         if (!profRes.ok) throw new Error(prof.error ?? "Erreur profil");
         setProfile(prof);
         setDisplayName(prof.display_name ?? "");
+        setAvatarUrl(prof.avatar_url ?? null);
         if (notifRes.ok) {
           setNotifEnabled(notif.enabled);
           setReminderTime(notif.scheduled_time ?? "09:00");
+          setNotifDays(notif.days ?? [...ALL_NOTIFICATION_DAYS]);
         }
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Erreur");
@@ -92,21 +105,6 @@ export function SettingsClient() {
         setLoading(false);
       }
     })();
-
-    void createClient()
-      .auth.getUser()
-      .then(({ data: { user } }) => {
-        if (!user) return;
-        const hasGoogle = user.identities?.some((i) => i.provider === "google");
-        const hasEmail = user.identities?.some((i) => i.provider === "email");
-        if (hasGoogle && !hasEmail) {
-          setAuthProvider("google");
-        } else if (hasEmail) {
-          setAuthProvider("email");
-        } else if (hasGoogle) {
-          setAuthProvider("google");
-        }
-      });
   }, []);
 
   useEffect(() => {
@@ -136,9 +134,28 @@ export function SettingsClient() {
     }
   }
 
+  async function uploadAvatar(file: File) {
+    setAvatarUploading(true);
+    setErr(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/profile/avatar", { method: "POST", body: fd });
+      const j = (await res.json()) as { avatar_url?: string; error?: string };
+      if (!res.ok) throw new Error(j.error ?? "Upload impossible");
+      setAvatarUrl(j.avatar_url ?? null);
+      setMsg("Photo mise à jour.");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
   async function saveNotifSettings(next: {
     enabled?: boolean;
     scheduled_time?: string;
+    days?: NotificationDayId[];
   }) {
     setNotifSaving(true);
     setErr(null);
@@ -152,10 +169,12 @@ export function SettingsClient() {
         error?: string;
         enabled?: boolean;
         scheduled_time?: string;
+        days?: NotificationDayId[];
       };
       if (!res.ok) throw new Error(j.error ?? "Erreur notifications");
       if (typeof j.enabled === "boolean") setNotifEnabled(j.enabled);
       if (j.scheduled_time) setReminderTime(j.scheduled_time);
+      if (j.days) setNotifDays(j.days);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erreur");
       throw e;
@@ -168,28 +187,54 @@ export function SettingsClient() {
     if (enabled) {
       const ok = await ensurePushSubscription();
       if (!ok) {
-        setErr(
-          "Autorise les notifications dans ton navigateur pour activer les rappels.",
-        );
+        setErr("Autorise les notifications dans ton navigateur.");
         return;
       }
     }
     try {
-      await saveNotifSettings({ enabled, scheduled_time: reminderTime });
+      await saveNotifSettings({
+        enabled,
+        scheduled_time: reminderTime,
+        days: notifDays,
+      });
       setMsg(enabled ? "Notifications activées." : "Notifications désactivées.");
     } catch {
       setNotifEnabled(!enabled);
     }
   }
 
-  async function onReminderTimeChange(time: string) {
-    setReminderTime(time);
+  function toggleNotifDay(id: NotificationDayId) {
+    const next = notifDays.includes(id)
+      ? notifDays.filter((d) => d !== id)
+      : [...notifDays, id];
+    setNotifDays(next);
     if (notifEnabled) {
-      try {
-        await saveNotifSettings({ enabled: true, scheduled_time: time });
-      } catch {
-        /* err affiché */
-      }
+      void saveNotifSettings({
+        enabled: true,
+        scheduled_time: reminderTime,
+        days: next,
+      });
+    }
+  }
+
+  async function exportData() {
+    setExporting(true);
+    setErr(null);
+    try {
+      const res = await fetch("/api/export");
+      if (!res.ok) throw new Error("Export impossible");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `deepna-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsg("Export téléchargé.");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -222,37 +267,9 @@ export function SettingsClient() {
   }
 
   async function logout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await createClient().auth.signOut();
     router.push("/login");
     router.refresh();
-  }
-
-  async function linkGoogle() {
-    setLinkingGoogle(true);
-    setErr(null);
-    try {
-      const supabase = createClient();
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-        window.location.origin;
-      const { data, error } = await supabase.auth.linkIdentity({
-        provider: "google",
-        options: {
-          redirectTo: `${appUrl}/auth/callback`,
-        },
-      });
-      if (error) throw new Error(error.message);
-      if (data?.url) {
-        window.location.assign(data.url);
-        return;
-      }
-      setErr("Aucune URL Google reçue.");
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Erreur");
-    } finally {
-      setLinkingGoogle(false);
-    }
   }
 
   async function deleteAccount() {
@@ -290,143 +307,134 @@ export function SettingsClient() {
     <div className="space-y-6">
       <section className={glassSectionClass}>
         <h2 className="text-sm font-semibold text-white">Compte</h2>
+        <div className="mt-4 flex items-center gap-4">
+          <button
+            type="button"
+            disabled={avatarUploading}
+            onClick={() => fileRef.current?.click()}
+            className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-white/10"
+          >
+            {avatarUrl ? (
+              <Image src={avatarUrl} alt="" fill className="object-cover" unoptimized />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-2xl text-neutral-500">
+                👤
+              </span>
+            )}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void uploadAvatar(f);
+            }}
+          />
+          <div>
+            <p className="text-sm text-white">Photo de profil</p>
+            <p className="text-xs text-neutral-500">JPG ou PNG, max 2 Mo</p>
+          </div>
+        </div>
         <label className="mt-4 block space-y-1">
           <span className="text-xs font-medium text-neutral-400">Prénom</span>
-          <input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className={inputClass}
-          />
+          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={inputClass} />
         </label>
         <label className="mt-3 block space-y-1">
           <span className="text-xs font-medium text-neutral-400">Email</span>
-          <input
-            value={profile?.email ?? ""}
-            readOnly
-            className={`${inputClass} cursor-not-allowed opacity-60`}
-          />
+          <input value={profile?.email ?? ""} readOnly className={`${inputClass} cursor-not-allowed opacity-60`} />
         </label>
-        <button
-          type="button"
-          disabled={saving || !displayName.trim()}
-          onClick={() => void saveName()}
-          className="btn-primary mt-3 px-4 py-2 text-sm disabled:opacity-50"
-        >
-          {saving ? "…" : "Enregistrer le prénom"}
+        <button type="button" disabled={saving || !displayName.trim()} onClick={() => void saveName()} className="btn-primary mt-3 px-4 py-2 text-sm disabled:opacity-50">
+          {saving ? "…" : "Enregistrer"}
         </button>
       </section>
 
       <section className={glassSectionClass}>
-        <h2 className="text-sm font-semibold text-white">Connexion</h2>
-        <p className="mt-2 text-sm text-neutral-300">
-          {authProvider === "google"
-            ? "Connecté via Google ✓"
-            : authProvider === "email"
-              ? "Connecté par email"
-              : "Méthode de connexion"}
-        </p>
-        {authProvider === "email" ? (
-          <button
-            type="button"
-            disabled={linkingGoogle}
-            onClick={() => void linkGoogle()}
-            className="glass-pill mt-3 rounded-xl px-4 py-2 text-sm text-white disabled:opacity-50"
-          >
-            {linkingGoogle ? "…" : "Lier mon compte Google"}
-          </button>
-        ) : null}
+        <h2 className="text-sm font-semibold text-white">Apparence</h2>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-neutral-300">Thème sombre</p>
+            <p className="text-xs text-neutral-500">Actif</p>
+          </div>
+          <IosSwitch label="Thème sombre" checked disabled onChange={() => {}} />
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3 opacity-50">
+          <div>
+            <p className="text-sm text-neutral-300">Thème clair</p>
+            <p className="text-xs text-neutral-500">Bientôt disponible</p>
+          </div>
+          <IosSwitch label="Thème clair" checked={false} disabled onChange={() => {}} />
+        </div>
+        <div className="mt-3">
+          <p className="text-sm text-neutral-300">Langue</p>
+          <p className="mt-1 text-xs text-neutral-500">Français (EN bientôt disponible)</p>
+        </div>
       </section>
 
       <section className={glassSectionClass}>
         <h2 className="text-sm font-semibold text-white">Notifications</h2>
-        <p className="mt-1 text-xs text-neutral-500">
-          Rappel push quotidien pour tes habitudes.
-        </p>
         <div className="mt-4 flex items-center justify-between gap-3">
           <span className="text-sm text-neutral-300">Notifications push</span>
-          <IosSwitch
-            label="Activer les notifications push"
-            checked={notifEnabled}
-            disabled={notifSaving}
-            onChange={(v) => void toggleNotifications(v)}
-          />
+          <IosSwitch label="Push" checked={notifEnabled} disabled={notifSaving} onChange={(v) => void toggleNotifications(v)} />
         </div>
         <label className="mt-4 block space-y-1">
-          <span className="text-xs font-medium text-neutral-400">
-            Heure du rappel quotidien
-          </span>
-          <input
-            type="time"
-            value={reminderTime}
-            disabled={!notifEnabled || notifSaving}
-            onChange={(e) => void onReminderTimeChange(e.target.value)}
-            className={`${inputClass} disabled:opacity-40`}
-          />
+          <span className="text-xs font-medium text-neutral-400">Heure du rappel</span>
+          <input type="time" value={reminderTime} disabled={!notifEnabled || notifSaving} onChange={(e) => { setReminderTime(e.target.value); if (notifEnabled) void saveNotifSettings({ enabled: true, scheduled_time: e.target.value, days: notifDays }); }} className={`${inputClass} disabled:opacity-40`} />
         </label>
+        <p className="mt-4 text-xs font-medium text-neutral-400">Jours actifs</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {NOTIFICATION_DAYS.map((d) => (
+            <button key={d.id} type="button" disabled={!notifEnabled || notifSaving} onClick={() => toggleNotifDay(d.id)} className={`h-9 w-9 rounded-full text-xs font-medium disabled:opacity-40 ${notifDays.includes(d.id) ? "bg-indigo-500 text-white" : "bg-white/10 text-neutral-400"}`}>
+              {d.label}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className={glassSectionClass}>
-        <h2 className="text-sm font-semibold text-white">Abonnement Deepna Pro</h2>
+        <h2 className="text-sm font-semibold text-white">Données</h2>
+        <p className="mt-1 text-xs text-neutral-500">Télécharge toutes tes habitudes et logs en JSON.</p>
+        <button type="button" disabled={exporting} onClick={() => void exportData()} className="glass-pill mt-3 rounded-xl px-4 py-2 text-sm text-white disabled:opacity-50">
+          {exporting ? "…" : "Exporter mes données"}
+        </button>
+      </section>
+
+      <section className={glassSectionClass}>
+        <h2 className="text-sm font-semibold text-white">Abonnement</h2>
         <p className="mt-1 text-xs text-neutral-500">
-          Statut :{" "}
-          <span className={isPro ? "font-medium text-indigo-300" : ""}>
-            {isPro ? "Actif" : "Gratuit"}
+          Plan actuel :{" "}
+          <span className={isPro ? "font-medium text-indigo-300" : "text-white"}>
+            {isPro ? "Pro" : "Gratuit"}
           </span>
         </p>
         {isPro ? (
-          <button
-            type="button"
-            disabled={billingLoading}
-            onClick={() => void portal()}
-            className="glass-pill mt-3 rounded-xl px-4 py-2 text-sm text-white disabled:opacity-50"
-          >
+          <button type="button" disabled={billingLoading} onClick={() => void portal()} className="glass-pill mt-3 rounded-xl px-4 py-2 text-sm text-white disabled:opacity-50">
             Gérer l&apos;abonnement
           </button>
         ) : (
-          <button
-            type="button"
-            disabled={billingLoading}
-            onClick={() => void checkout()}
-            className="btn-primary mt-3 px-4 py-2 text-sm disabled:opacity-50"
-          >
+          <button type="button" disabled={billingLoading} onClick={() => void checkout()} className="btn-primary mt-3 px-4 py-2 text-sm disabled:opacity-50">
             {billingLoading ? "…" : "Passer à Pro"}
           </button>
         )}
       </section>
 
-      <button
-        type="button"
-        onClick={() => void logout()}
-        className="w-full rounded-xl border border-white/15 py-3 text-sm font-medium text-white transition-colors hover:bg-white/5"
-      >
+      <button type="button" onClick={() => void logout()} className="w-full rounded-xl border border-white/15 py-3 text-sm font-medium text-white hover:bg-white/5">
         Se déconnecter
       </button>
 
       <section className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
         <h2 className="text-sm font-semibold text-red-400">Zone de danger</h2>
-        <p className="mt-1 text-xs text-neutral-400">
-          Supprime définitivement ton compte et toutes tes données.
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            setDeleteConfirm("");
-            setDeleteModalOpen(true);
-          }}
-          className="mt-3 rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
-        >
+        <p className="mt-1 text-xs text-neutral-400">Supprime définitivement ton compte et toutes tes données.</p>
+        <button type="button" onClick={() => { setDeleteConfirm(""); setDeleteModalOpen(true); }} className="mt-3 rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10">
           Supprimer mon compte
         </button>
       </section>
 
       <p className="text-center text-xs text-neutral-500">
-        <Link href="/legal/privacy" className="hover:text-neutral-300">
-          Confidentialité
-        </Link>
+        <Link href="/legal/privacy" className="hover:text-neutral-300">Confidentialité</Link>
         {" · "}
-        <Link href="/legal/terms" className="hover:text-neutral-300">
-          CGU
-        </Link>
+        <Link href="/legal/terms" className="hover:text-neutral-300">CGU</Link>
       </p>
 
       {msg ? <p className="text-sm text-emerald-400">{msg}</p> : null}
@@ -435,39 +443,13 @@ export function SettingsClient() {
       {deleteModalOpen ? (
         <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/70 p-4 sm:items-center">
           <div className="glass-sheet-dark w-full max-w-md rounded-2xl p-5">
-            <h3 className="text-lg font-semibold text-white">
-              Supprimer le compte ?
-            </h3>
-            <p className="mt-2 text-sm text-neutral-400">
-              Cette action est irréversible. Toutes tes habitudes, logs et
-              objectifs seront effacés.
-            </p>
-            <p className="mt-4 text-xs text-neutral-500">
-              Tape <strong className="text-white">SUPPRIMER</strong> pour
-              confirmer :
-            </p>
-            <input
-              value={deleteConfirm}
-              onChange={(e) => setDeleteConfirm(e.target.value)}
-              placeholder="SUPPRIMER"
-              className={`mt-2 ${inputClass}`}
-              autoFocus
-            />
+            <h3 className="text-lg font-semibold text-white">Supprimer le compte ?</h3>
+            <p className="mt-2 text-sm text-neutral-400">Cette action est irréversible.</p>
+            <p className="mt-4 text-xs text-neutral-500">Tape <strong className="text-white">SUPPRIMER</strong> :</p>
+            <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder="SUPPRIMER" className={`mt-2 ${inputClass}`} autoFocus />
             <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => setDeleteModalOpen(false)}
-                className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm text-neutral-300"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                disabled={deleting || deleteConfirm !== "SUPPRIMER"}
-                onClick={() => void deleteAccount()}
-                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-              >
+              <button type="button" disabled={deleting} onClick={() => setDeleteModalOpen(false)} className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm text-neutral-300">Annuler</button>
+              <button type="button" disabled={deleting || deleteConfirm !== "SUPPRIMER"} onClick={() => void deleteAccount()} className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white disabled:opacity-50">
                 {deleting ? "…" : "Supprimer définitivement"}
               </button>
             </div>

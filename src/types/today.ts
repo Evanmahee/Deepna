@@ -25,6 +25,7 @@ export type HabitRowData = {
   missed_days_count: number;
   archived: boolean;
   sort_order: number;
+  duration_minutes?: number | null;
 };
 
 export type HabitLogRow = {

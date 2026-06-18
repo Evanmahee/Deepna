@@ -17,7 +17,7 @@ export async function GET() {
   const { data: profile, error } = await supabase
     .from("profiles")
     .select(
-      "display_name, identity_statement, subscription_status, stripe_customer_id",
+      "display_name, identity_statement, subscription_status, stripe_customer_id, avatar_url",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -35,6 +35,7 @@ export async function GET() {
     identity_statement: profile?.identity_statement ?? null,
     subscription_status: profile?.subscription_status ?? "free",
     has_stripe_customer: Boolean(profile?.stripe_customer_id),
+    avatar_url: profile?.avatar_url ?? null,
   });
 }
 

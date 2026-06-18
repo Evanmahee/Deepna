@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { HabitLogRow, HabitRowData, TimeBlockRow } from "@/types/today";
 import { HabitRow } from "@/components/today/HabitRow";
 import { GroupChevronButton } from "@/components/today/GroupChevronButton";
@@ -34,9 +35,16 @@ export function TimeBlockSection({
   defaultOpen = false,
   unassignedLabel,
 }: TimeBlockSectionProps) {
+  const router = useRouter();
+  const [orderedHabits, setOrderedHabits] = useState(habits);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [completedOverrides, setCompletedOverrides] = useState<
     Record<string, boolean>
   >({});
+
+  useEffect(() => {
+    setOrderedHabits(habits);
+  }, [habits]);
 
   useEffect(() => {
     setCompletedOverrides({});
@@ -60,7 +68,7 @@ export function TimeBlockSection({
     return null;
   }
 
-  const sortedHabits = [...habits].sort((a, b) => {
+  const sortedHabits = [...orderedHabits].sort((a, b) => {
     const ca = isHabitCompleted(a.id);
     const cb = isHabitCompleted(b.id);
     if (ca !== cb) return ca ? 1 : -1;
@@ -78,6 +86,38 @@ export function TimeBlockSection({
       ? Math.min(100, (completedCount / sortedHabits.length) * 100)
       : 0;
   const hasProgress = completedCount > 0;
+
+  const persistOrder = useCallback(
+    async (next: HabitRowData[]) => {
+      await fetch("/api/habits/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          groups: [
+            {
+              time_block_id: block?.id ?? null,
+              habit_ids: next.map((h) => h.id),
+            },
+          ],
+        }),
+      });
+      router.refresh();
+    },
+    [block?.id, router],
+  );
+
+  function handleDrop(targetId: string, sourceId: string) {
+    if (targetId === sourceId) return;
+    const ids = sortedHabits.map((h) => h.id);
+    const from = ids.indexOf(sourceId);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...sortedHabits];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setOrderedHabits(next);
+    void persistOrder(next);
+  }
 
   return (
     <details
@@ -131,6 +171,22 @@ export function TimeBlockSection({
               logDate={logDate}
               completedToday={done}
               dimmed={done}
+              draggable
+              isDragOver={dragOverId === h.id}
+              onDragStart={(e) => {
+                e.dataTransfer.setData("text/habit-id", h.id);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverId(h.id);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverId(null);
+                const sourceId = e.dataTransfer.getData("text/habit-id");
+                if (sourceId) handleDrop(h.id, sourceId);
+              }}
               onCompletedChange={(next) =>
                 setCompletedOverrides((prev) => ({ ...prev, [h.id]: next }))
               }

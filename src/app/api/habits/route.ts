@@ -15,10 +15,16 @@ type Body = {
   notification?: {
     enabled?: boolean;
     scheduled_time?: string;
+    days?: string[];
+    message?: string;
   };
+  duration_minutes?: number | null;
 };
 
-const ALL_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+import {
+  ALL_NOTIFICATION_DAYS,
+  normalizeNotificationDays,
+} from "@/lib/notification-days";
 
 async function supabaseRoute() {
   const cookieStore = await cookies();
@@ -101,6 +107,9 @@ export async function POST(request: Request) {
       icon_color,
       sort_order: nextSort,
       ...(body.time_block_id ? { time_block_id: body.time_block_id } : {}),
+      ...(body.duration_minutes != null
+        ? { duration_minutes: body.duration_minutes }
+        : {}),
     })
     .select("id")
     .single();
@@ -119,13 +128,16 @@ export async function POST(request: Request) {
     }
 
     const emoji = body.icon_emoji?.trim() || "⭐";
+    const days = normalizeNotificationDays(body.notification.days);
+    const message =
+      body.notification.message?.trim() || `${emoji} ${name}`;
     const { error: notifErr } = await supabase.from("notification_settings").insert({
       user_id: user.id,
       habit_id: row.id,
       label: name,
-      message: `${emoji} ${name}`,
+      message,
       scheduled_time,
-      days: [...ALL_DAYS],
+      days,
       enabled: true,
     });
 

@@ -6,6 +6,7 @@ export type HabitLite = {
   missed_days_count: number;
   icon_emoji?: string | null;
   icon_color?: string | null;
+  duration_minutes?: number | null;
 };
 
 /** Jours consécutifs avec completed=true en remontant depuis `endDay` (YYYY-MM-DD). */
@@ -108,6 +109,39 @@ export function globalCompletion30d(
     }
   }
   return Math.round((ok / cells) * 100);
+}
+
+export function globalCompletionInRange(
+  logs: HabitLogRow[],
+  habits: HabitLite[],
+  fromDay: string,
+  toDay: string,
+): number {
+  return globalCompletion30d(logs, habits, fromDay, toDay);
+}
+
+export function totalCompletedInRange(
+  logs: HabitLogRow[],
+  fromDay: string,
+  toDay: string,
+): number {
+  const from = Date.parse(`${fromDay}T12:00:00Z`);
+  const to = Date.parse(`${toDay}T12:00:00Z`);
+  let n = 0;
+  for (const l of logs) {
+    if (!l.completed) continue;
+    const t = Date.parse(`${l.logged_on}T12:00:00Z`);
+    if (t >= from && t <= to) n += 1;
+  }
+  return n;
+}
+
+export function earliestLogDay(logs: HabitLogRow[]): string | null {
+  let earliest: string | null = null;
+  for (const l of logs) {
+    if (!earliest || l.logged_on < earliest) earliest = l.logged_on;
+  }
+  return earliest;
 }
 
 /** Plus longue série consécutive tous temps pour une habitude. */
