@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { isValidHabitColor, normalizeHabitColor } from "@/lib/habit-colors";
+import { toScheduledTimeOnly } from "@/lib/notification-time";
 
 type Body = {
   name?: string;
@@ -18,22 +19,6 @@ type Body = {
 };
 
 const ALL_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-
-function parseScheduledTime(raw: string | undefined): string | null {
-  if (!raw?.trim()) {
-    return null;
-  }
-  const match = /^(\d{2}):(\d{2})$/.exec(raw.trim());
-  if (!match) {
-    return null;
-  }
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  if (hour > 23 || minute > 59) {
-    return null;
-  }
-  return `${match[1]}:${match[2]}:00`;
-}
 
 async function supabaseRoute() {
   const cookieStore = await cookies();
@@ -125,7 +110,7 @@ export async function POST(request: Request) {
   }
 
   if (body.notification?.enabled) {
-    const scheduled_time = parseScheduledTime(body.notification.scheduled_time);
+    const scheduled_time = toScheduledTimeOnly(body.notification.scheduled_time);
     if (!scheduled_time) {
       return NextResponse.json(
         { error: "Heure de notification invalide" },
