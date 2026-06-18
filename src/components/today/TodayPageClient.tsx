@@ -5,7 +5,9 @@ import { DateStrip } from "@/components/today/DateStrip";
 import { TimeBlockSection } from "@/components/today/TimeBlockSection";
 import { FloatingAddButton } from "@/components/today/FloatingAddButton";
 import { TodayPageHeader } from "@/components/today/TodayPageHeader";
+import { TodayDayProgress } from "@/components/today/TodayDayProgress";
 import { CreateGroupModal } from "@/components/today/CreateGroupModal";
+import { dayCompletionStats } from "@/lib/today-display";
 import type { DayCompletionStatus } from "@/lib/day-completion";
 import type { HabitLogRow, HabitRowData, TimeBlockRow } from "@/types/today";
 
@@ -61,13 +63,32 @@ export function TodayPageClient({
   const noResults =
     searchQuery.trim().length > 0 && filteredHabits.length === 0;
 
+  const completedToday = useMemo(() => {
+    let n = 0;
+    for (const h of filteredHabits) {
+      if (logsByHabitId[h.id]?.completed) n += 1;
+    }
+    return n;
+  }, [filteredHabits, logsByHabitId]);
+
+  const dayStats = dayCompletionStats(filteredHabits.length, completedToday);
+
   return (
     <div className="flex min-h-full min-w-0 flex-1 flex-col overflow-x-hidden">
       <div className="sticky top-0 z-10">
         <TodayPageHeader
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
+          logDate={logDate}
         />
+        {!noResults && filteredHabits.length > 0 ? (
+          <TodayDayProgress
+            completed={completedToday}
+            total={filteredHabits.length}
+            label={dayStats.label}
+            pct={dayStats.pct}
+          />
+        ) : null}
         <DateStrip selectedDate={logDate} completionByDay={completionByDay} />
       </div>
       <main className="flex-1 space-y-1 px-3 pb-4 pt-6">

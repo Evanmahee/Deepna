@@ -12,6 +12,7 @@ type HabitRowProps = {
   habit: HabitRowData;
   logDate: string;
   completedToday: boolean;
+  dimmed?: boolean;
   onCompletedChange?: (completed: boolean) => void;
 };
 
@@ -41,6 +42,7 @@ export function HabitRow({
   habit,
   logDate,
   completedToday,
+  dimmed = false,
   onCompletedChange,
 }: HabitRowProps) {
   const router = useRouter();
@@ -160,11 +162,11 @@ export function HabitRow({
         {...longPressProps}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className={`relative flex select-none items-center gap-2 overflow-hidden rounded-xl border px-2 py-2.5 shadow-sm transition-colors duration-300 active:scale-[0.99] sm:gap-3 sm:px-3 ${
+        className={`relative flex select-none items-center gap-2 overflow-hidden rounded-xl border px-2 py-2.5 shadow-sm transition-all duration-300 active:scale-[0.99] sm:gap-3 sm:px-3 ${
           completed
             ? "border-black/10 bg-white text-black"
             : "glass-habit text-white"
-        } ${busy ? "pointer-events-none opacity-40" : ""}`}
+        } ${dimmed ? "opacity-50 saturate-[0.35]" : ""} ${busy ? "pointer-events-none opacity-40" : ""}`}
         role="button"
         tabIndex={0}
         aria-label={`${habit.name}. Appui court pour cocher. Appui long ou glisser à gauche pour les options.`}

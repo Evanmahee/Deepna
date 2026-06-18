@@ -1,14 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = ["/login", "/auth/callback", "/legal"];
+const GUEST_PUBLIC = ["/", "/login", "/auth/callback", "/legal"];
 
-function isPublicPath(pathname: string) {
-  if (pathname === "/") {
-    return true;
-  }
-  return PUBLIC_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+function isGuestPublic(pathname: string) {
+  if (pathname === "/") return true;
+  return GUEST_PUBLIC.some(
+    (p) => p !== "/" && (pathname === p || pathname.startsWith(`${p}/`)),
+  );
+}
+
+function isOnboardingExempt(pathname: string) {
+  return (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/legal")
   );
 }
 
@@ -49,7 +56,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && !isPublicPath(pathname)) {
+  if (!user && !isGuestPublic(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -61,18 +68,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (
-    user &&
-    !pathname.startsWith("/onboarding") &&
-    !isPublicPath(pathname)
-  ) {
+  if (user && !isOnboardingExempt(pathname)) {
     const { data: prof } = await supabase
       .from("profiles")
-      .select("display_name")
+      .select("onboarding_done")
       .eq("id", user.id)
       .maybeSingle();
-    const dn = prof?.display_name?.trim();
-    if (!dn) {
+    if (!prof?.onboarding_done) {
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding";
       return NextResponse.redirect(url);

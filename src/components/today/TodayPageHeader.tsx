@@ -4,17 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { HeaderActions } from "@/components/nav/HeaderActions";
 import { HeaderOrganizeButton } from "@/components/nav/HeaderOrganizeButton";
+import { formatTodayHeaderDate } from "@/lib/today-display";
 
 const DURATION_MS = 320;
 
 type TodayPageHeaderProps = {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
+  logDate: string;
 };
 
 export function TodayPageHeader({
   searchQuery,
   onSearchQueryChange,
+  logDate,
 }: TodayPageHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,7 +46,7 @@ export function TodayPageHeader({
 
   return (
     <header className="px-3 pt-3 pb-1">
-      <div className="relative mx-auto h-11 w-full max-w-md">
+      <div className="relative mx-auto min-h-[3.25rem] w-full max-w-md">
         <div
           className={[
             "absolute inset-0 flex items-center justify-between transition-all ease-out",
@@ -66,7 +69,7 @@ export function TodayPageHeader({
           </div>
 
           <h1
-            className="pointer-events-none absolute inset-0 flex items-center justify-center text-xl font-semibold text-white transition-all ease-out"
+            className="pointer-events-none absolute inset-x-2 flex flex-col items-center justify-center text-center transition-all ease-out"
             style={{
               transitionDuration: `${DURATION_MS}ms`,
               transitionDelay: searchOpen ? "40ms" : "60ms",
@@ -74,7 +77,10 @@ export function TodayPageHeader({
               transform: searchOpen ? "translateY(-4px) scale-95" : "translateY(0) scale-100",
             }}
           >
-            Aujourd&apos;hui
+            <span className="text-xl font-semibold text-white">Aujourd&apos;hui</span>
+            <span className="mt-0.5 truncate text-[11px] font-normal text-neutral-400">
+              {formatTodayHeaderDate(logDate).replace(/^Aujourd'hui · /, "")}
+            </span>
           </h1>
 
           <div

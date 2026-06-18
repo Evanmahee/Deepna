@@ -60,10 +60,22 @@ export function TimeBlockSection({
     return null;
   }
 
-  const completedCount = habits.filter((h) => isHabitCompleted(h.id)).length;
+  const sortedHabits = [...habits].sort((a, b) => {
+    const ca = isHabitCompleted(a.id);
+    const cb = isHabitCompleted(b.id);
+    if (ca !== cb) return ca ? 1 : -1;
+    return (
+      (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
+      a.name.localeCompare(b.name, "fr")
+    );
+  });
+
+  const completedCount = sortedHabits.filter((h) =>
+    isHabitCompleted(h.id),
+  ).length;
   const pct =
-    habits.length > 0
-      ? Math.min(100, (completedCount / habits.length) * 100)
+    sortedHabits.length > 0
+      ? Math.min(100, (completedCount / sortedHabits.length) * 100)
       : 0;
   const hasProgress = completedCount > 0;
 
@@ -77,8 +89,8 @@ export function TimeBlockSection({
         role="progressbar"
         aria-valuenow={completedCount}
         aria-valuemin={0}
-        aria-valuemax={habits.length}
-        aria-label={`${title} — ${completedCount} sur ${habits.length} complétées`}
+        aria-valuemax={sortedHabits.length}
+        aria-label={`${title} — ${completedCount} sur ${sortedHabits.length} complétées`}
       >
         <div
           aria-hidden
@@ -106,21 +118,25 @@ export function TimeBlockSection({
               {subtitle}
             </p>
           </div>
-          <GroupChevronButton completed={completedCount} total={habits.length} />
+          <GroupChevronButton completed={completedCount} total={sortedHabits.length} />
         </div>
       </summary>
       <div className="space-y-2 px-3 py-3">
-        {habits.map((h) => (
-          <HabitRow
-            key={h.id}
-            habit={h}
-            logDate={logDate}
-            completedToday={isHabitCompleted(h.id)}
-            onCompletedChange={(next) =>
-              setCompletedOverrides((prev) => ({ ...prev, [h.id]: next }))
-            }
-          />
-        ))}
+        {sortedHabits.map((h) => {
+          const done = isHabitCompleted(h.id);
+          return (
+            <HabitRow
+              key={h.id}
+              habit={h}
+              logDate={logDate}
+              completedToday={done}
+              dimmed={done}
+              onCompletedChange={(next) =>
+                setCompletedOverrides((prev) => ({ ...prev, [h.id]: next }))
+              }
+            />
+          );
+        })}
       </div>
     </details>
   );

@@ -74,11 +74,10 @@ export async function GET(request: NextRequest) {
   if (user) {
     const { data: prof } = await supabase
       .from("profiles")
-      .select("display_name")
+      .select("onboarding_done")
       .eq("id", user.id)
       .maybeSingle();
-    const dn = prof?.display_name?.trim();
-    if (!dn) {
+    if (!prof?.onboarding_done) {
       return NextResponse.redirect(`${base}/onboarding`);
     }
   }
