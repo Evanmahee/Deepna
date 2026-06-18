@@ -11,6 +11,7 @@ import type { HabitLogRow } from "@/types/today";
 import { StatsHeader } from "@/components/stats/StatsHeader";
 import { MonthCalendar } from "@/components/stats/MonthCalendar";
 import { HabitStatsTable } from "@/components/stats/HabitStatsTable";
+import { WeeklyGrid } from "@/components/stats/WeeklyGrid";
 import { PageHeader } from "@/components/nav/PageHeader";
 
 export const metadata: Metadata = {
@@ -40,15 +41,17 @@ export default async function StatsPage() {
 
   const toDay = todayUtcString();
   const fromDay = addDays(toDay, -29);
+  const weekFromDay = addDays(toDay, -6);
   const now = new Date();
   const calYear = now.getUTCFullYear();
   const calMonth = now.getUTCMonth() + 1;
   const { start: monthStart, end: monthEnd } = monthBounds(calYear, calMonth);
 
-  const [habitsRes, logs30Res, logsAllRes, logsMonthRes] = await Promise.all([
+  const [habitsRes, logs30Res, logsAllRes, logsMonthRes, logsWeekRes] =
+    await Promise.all([
     supabase
       .from("habits")
-      .select("id, name, missed_days_count")
+      .select("id, name, missed_days_count, icon_emoji, icon_color")
       .eq("user_id", user.id)
       .eq("archived", false),
     supabase
@@ -67,12 +70,19 @@ export default async function StatsPage() {
       .eq("user_id", user.id)
       .gte("logged_on", monthStart)
       .lte("logged_on", monthEnd),
+    supabase
+      .from("habit_logs")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("logged_on", weekFromDay)
+      .lte("logged_on", toDay),
   ]);
 
   const habits = (habitsRes.data ?? []) as HabitLite[];
   const logs30 = (logs30Res.data ?? []) as HabitLogRow[];
   const logsAll = (logsAllRes.data ?? []) as HabitLogRow[];
   const logsMonth = (logsMonthRes.data ?? []) as HabitLogRow[];
+  const logsWeek = (logsWeekRes.data ?? []) as HabitLogRow[];
 
   const globalPct = globalCompletion30d(logs30, habits, fromDay, toDay);
   const bestStreakAllTime = bestStreakAllTimeAmongHabits(logsAll, habits);
@@ -96,6 +106,7 @@ export default async function StatsPage() {
           logs={logsMonth}
           habits={habits}
         />
+        <WeeklyGrid habits={habits} logs={logsWeek} endDay={toDay} />
         <HabitStatsTable
           habits={habits}
           logs={logs30}

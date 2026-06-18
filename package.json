@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen-icons": "node scripts/gen-icons.js",
-    "gen-vapid": "node scripts/gen-vapid.js"
+    "gen-vapid": "node scripts/gen-vapid.js",
+    "gen:vapid": "node scripts/gen-vapid.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

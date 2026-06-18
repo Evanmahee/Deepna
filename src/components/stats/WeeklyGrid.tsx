@@ -1,4 +1,5 @@
-import { addDaysUtc } from "@/lib/dates";
+import { addDaysUtc, todayUtcString } from "@/lib/dates";
+import { normalizeHabitColor } from "@/lib/habit-colors";
 import type { HabitLite } from "@/lib/habit-stats";
 import type { HabitLogRow } from "@/types/today";
 
@@ -15,12 +16,8 @@ function weekdayIndex(iso: string): number {
   return d === 0 ? 6 : d - 1;
 }
 
-function weekDaysEnding(endDay: string): string[] {
-  const end = Date.parse(`${endDay}T12:00:00.000Z`);
-  const endDow = new Date(end).getUTCDay();
-  const mondayOffset = endDow === 0 ? -6 : 1 - endDow;
-  const monday = addDaysUtc(endDay, mondayOffset);
-  return Array.from({ length: 7 }, (_, i) => addDaysUtc(monday, i));
+function lastSevenDays(endDay: string): string[] {
+  return Array.from({ length: 7 }, (_, i) => addDaysUtc(endDay, i - 6));
 }
 
 function isCompleted(
@@ -34,11 +31,12 @@ function isCompleted(
 }
 
 export function WeeklyGrid({ habits, logs, endDay }: WeeklyGridProps) {
-  const days = weekDaysEnding(endDay);
+  const days = lastSevenDays(endDay);
+  const today = todayUtcString();
 
   return (
     <div className="glass overflow-x-auto rounded-xl p-4 shadow-sm">
-      <h2 className="mb-3 text-sm font-semibold text-white">Semaine en cours</h2>
+      <h2 className="mb-3 text-sm font-semibold text-white">7 derniers jours</h2>
       {habits.length === 0 ? (
         <p className="text-sm text-neutral-500">Aucune habitude active.</p>
       ) : (
@@ -61,17 +59,32 @@ export function WeeklyGrid({ habits, logs, endDay }: WeeklyGridProps) {
           <tbody>
             {habits.map((h) => (
               <tr key={h.id} className="border-t border-white/10">
-                <td className="max-w-[8rem] truncate py-2 pr-2 font-medium text-white">
+                <td className="max-w-[9rem] truncate py-2 pr-2 font-medium text-white">
+                  <span className="mr-1.5" aria-hidden>
+                    {h.icon_emoji || "•"}
+                  </span>
                   {h.name}
                 </td>
                 {days.map((day) => {
+                  const isFuture = day > today;
+                  if (isFuture) {
+                    return (
+                      <td key={day} className="py-2 text-center">
+                        <span className="inline-block h-3.5 w-3.5" aria-hidden />
+                      </td>
+                    );
+                  }
                   const done = isCompleted(logs, h.id, day);
+                  const color = normalizeHabitColor(h.icon_color);
                   return (
                     <td key={day} className="py-2 text-center">
                       <span
                         className={`inline-block h-3.5 w-3.5 rounded-full ${
-                          done ? "bg-white" : "bg-white/15 ring-1 ring-white/20"
+                          done
+                            ? ""
+                            : "bg-transparent ring-1 ring-neutral-600"
                         }`}
+                        style={done ? { backgroundColor: color } : undefined}
                         aria-label={done ? "Fait" : "Non fait"}
                       />
                     </td>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Plus } from "lucide-react";
 import { EditHabitModal } from "@/components/today/EditHabitModal";
 import { HabitContextMenu } from "@/components/today/HabitContextMenu";
+import { useToast } from "@/components/ui/ToastProvider";
 import { useLongPress } from "@/lib/use-long-press";
 import type { HabitRowData } from "@/types/today";
 
@@ -46,9 +47,11 @@ export function HabitRow({
   onCompletedChange,
 }: HabitRowProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [completed, setCompleted] = useState(completedToday);
   const [pending, setPending] = useState(false);
   const [sweep, setSweep] = useState<"in" | "out" | null>(null);
+  const [checkPop, setCheckPop] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -65,6 +68,12 @@ export function HabitRow({
     const t = window.setTimeout(() => setSweep(null), 520);
     return () => window.clearTimeout(t);
   }, [sweep]);
+
+  useEffect(() => {
+    if (!checkPop) return;
+    const t = window.setTimeout(() => setCheckPop(false), 200);
+    return () => window.clearTimeout(t);
+  }, [checkPop]);
 
   function triggerSweep(mode: "in" | "out") {
     setSweep(null);
@@ -84,6 +93,7 @@ export function HabitRow({
     const nextC = !prevC;
     if (nextC && !prevC) {
       triggerSweep("in");
+      setCheckPop(true);
     } else if (!nextC && prevC) {
       triggerSweep("out");
     }
@@ -96,6 +106,7 @@ export function HabitRow({
         setCompleted(json.completed);
         onCompletedChange?.(json.completed);
       }
+      showToast(nextC ? "Habitude cochée ✓" : "Habitude décochée");
       router.refresh();
     } catch {
       setCompleted(prevC);
@@ -104,7 +115,7 @@ export function HabitRow({
     } finally {
       setPending(false);
     }
-  }, [completed, habit.id, logDate, onCompletedChange, router]);
+  }, [completed, habit.id, logDate, onCompletedChange, router, showToast]);
 
   async function archiveHabit() {
     setBusy(true);
@@ -118,6 +129,7 @@ export function HabitRow({
       if (!res.ok) {
         throw new Error(j.error ?? "Archivage impossible");
       }
+      showToast("Habitude archivée");
       router.refresh();
     } catch {
       /* silencieux */
@@ -134,6 +146,7 @@ export function HabitRow({
       if (!res.ok) {
         throw new Error(j.error ?? "Suppression impossible");
       }
+      showToast("Habitude supprimée");
       router.refresh();
     } catch {
       /* silencieux */
@@ -248,7 +261,7 @@ export function HabitRow({
               />
             </svg>
           )}
-          <span className="relative z-10 flex items-center justify-center">
+          <span className={`relative z-10 flex items-center justify-center ${checkPop ? "habit-check-pop" : ""}`}>
             {completed ? (
               <Check
                 className="h-4 w-4 sm:h-[18px] sm:w-[18px]"

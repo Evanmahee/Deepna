@@ -1,6 +1,12 @@
 import type { HabitLogRow } from "@/types/today";
 
-export type HabitLite = { id: string; name: string; missed_days_count: number };
+export type HabitLite = {
+  id: string;
+  name: string;
+  missed_days_count: number;
+  icon_emoji?: string | null;
+  icon_color?: string | null;
+};
 
 /** Jours consécutifs avec completed=true en remontant depuis `endDay` (YYYY-MM-DD). */
 export function currentStreak(

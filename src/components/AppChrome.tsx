@@ -17,7 +17,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         guestHome ||
         pathname.startsWith("/login") ||
         pathname.startsWith("/onboarding") ||
-        pathname.startsWith("/legal");
+        pathname.startsWith("/legal") ||
+        /^\/share\/[^/]+$/.test(pathname);
       setShowNav(!hide && Boolean(user));
     });
   }, [pathname]);
@@ -25,6 +26,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const hideChrome =
     pathname.startsWith("/login") ||
     pathname.startsWith("/legal") ||
+    /^\/share\/[^/]+$/.test(pathname) ||
     (pathname === "/" && !showNav);
 
   return (

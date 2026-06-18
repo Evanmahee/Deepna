@@ -5,6 +5,7 @@ const GUEST_PUBLIC = ["/", "/login", "/auth/callback", "/legal"];
 
 function isGuestPublic(pathname: string) {
   if (pathname === "/") return true;
+  if (/^\/share\/[^/]+$/.test(pathname)) return true;
   return GUEST_PUBLIC.some(
     (p) => p !== "/" && (pathname === p || pathname.startsWith(`${p}/`)),
   );
@@ -15,7 +16,8 @@ function isOnboardingExempt(pathname: string) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/onboarding") ||
-    pathname.startsWith("/legal")
+    pathname.startsWith("/legal") ||
+    /^\/share\/[^/]+$/.test(pathname)
   );
 }
 

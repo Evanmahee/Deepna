@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppChrome } from "@/components/AppChrome";
 import { PushRegister } from "@/components/PushRegister";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,8 +43,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className="flex min-h-full flex-col bg-black text-white">
-        <PushRegister />
-        <AppChrome>{children}</AppChrome>
+        <ToastProvider>
+          <PushRegister />
+          <AppChrome>{children}</AppChrome>
+        </ToastProvider>
       </body>
     </html>
   );

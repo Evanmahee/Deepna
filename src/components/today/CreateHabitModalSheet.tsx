@@ -23,6 +23,7 @@ import { HabitColorPicker } from "@/components/today/HabitColorPicker";
 import { HabitGroupPicker } from "@/components/today/HabitGroupPicker";
 import { HabitNotificationPicker } from "@/components/today/HabitNotificationPicker";
 import { HabitDescriptionPicker } from "@/components/today/HabitDescriptionPicker";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export { NEW_TIME_BLOCK };
 
@@ -50,6 +51,7 @@ export function CreateHabitModalSheet({
   initialType = "good",
 }: SheetProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const isDark = variant === "dark";
 
   const [panel, setPanel] = useState<Panel>("main");
@@ -137,6 +139,7 @@ export function CreateHabitModalSheet({
       if (!res.ok) {
         throw new Error(j.error ?? "Création impossible");
       }
+      showToast("Habitude créée");
       onClose();
       router.refresh();
     } catch (e) {

@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { ensurePushSubscription } from "@/lib/push-client";
 import { glassInputClass, glassSectionClass } from "@/lib/glass";
 
+type AuthProvider = "email" | "google" | "unknown";
+
 type ProfileData = {
   email: string | null;
   display_name: string | null;
@@ -65,6 +67,8 @@ export function SettingsClient() {
   const [deleting, setDeleting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [authProvider, setAuthProvider] = useState<AuthProvider>("unknown");
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -88,6 +92,21 @@ export function SettingsClient() {
         setLoading(false);
       }
     })();
+
+    void createClient()
+      .auth.getUser()
+      .then(({ data: { user } }) => {
+        if (!user) return;
+        const hasGoogle = user.identities?.some((i) => i.provider === "google");
+        const hasEmail = user.identities?.some((i) => i.provider === "email");
+        if (hasGoogle && !hasEmail) {
+          setAuthProvider("google");
+        } else if (hasEmail) {
+          setAuthProvider("email");
+        } else if (hasGoogle) {
+          setAuthProvider("google");
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -209,6 +228,33 @@ export function SettingsClient() {
     router.refresh();
   }
 
+  async function linkGoogle() {
+    setLinkingGoogle(true);
+    setErr(null);
+    try {
+      const supabase = createClient();
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+        window.location.origin;
+      const { data, error } = await supabase.auth.linkIdentity({
+        provider: "google",
+        options: {
+          redirectTo: `${appUrl}/auth/callback`,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.url) {
+        window.location.assign(data.url);
+        return;
+      }
+      setErr("Aucune URL Google reçue.");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setLinkingGoogle(false);
+    }
+  }
+
   async function deleteAccount() {
     if (deleteConfirm !== "SUPPRIMER") {
       setErr('Tape « SUPPRIMER » pour confirmer.');
@@ -268,6 +314,27 @@ export function SettingsClient() {
         >
           {saving ? "…" : "Enregistrer le prénom"}
         </button>
+      </section>
+
+      <section className={glassSectionClass}>
+        <h2 className="text-sm font-semibold text-white">Connexion</h2>
+        <p className="mt-2 text-sm text-neutral-300">
+          {authProvider === "google"
+            ? "Connecté via Google ✓"
+            : authProvider === "email"
+              ? "Connecté par email"
+              : "Méthode de connexion"}
+        </p>
+        {authProvider === "email" ? (
+          <button
+            type="button"
+            disabled={linkingGoogle}
+            onClick={() => void linkGoogle()}
+            className="glass-pill mt-3 rounded-xl px-4 py-2 text-sm text-white disabled:opacity-50"
+          >
+            {linkingGoogle ? "…" : "Lier mon compte Google"}
+          </button>
+        ) : null}
       </section>
 
       <section className={glassSectionClass}>

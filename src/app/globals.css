@@ -445,6 +445,22 @@ a:hover {
   animation: habit-check-stroke-out 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+@keyframes habit-check-pop {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.habit-check-pop {
+  animation: habit-check-pop 200ms ease-out;
+}
+
 @keyframes landing-fade-in {
   from {
     opacity: 0;

@@ -13,6 +13,7 @@ import {
   type TemplateCategory,
 } from "@/lib/habit-templates";
 import { CreateHabitModalSheet } from "@/components/today/CreateHabitModalSheet";
+import { useToast } from "@/components/ui/ToastProvider";
 
 type CreateHabitModalProps = {
   open: boolean;
@@ -28,6 +29,7 @@ export function CreateHabitModal({
   initialView = "templates",
 }: CreateHabitModalProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [timeBlocks, setTimeBlocks] = useState<TimeBlockRow[]>([]);
   const [view, setView] = useState<ModalView>("templates");
@@ -129,6 +131,7 @@ export function CreateHabitModal({
       });
       const j = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(j.error ?? "Création impossible");
+      showToast("Habitude créée");
       onClose();
       router.refresh();
     } catch (e) {
